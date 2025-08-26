@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import PizzaBuilder from './pages/PizzaBuilder'
 import Orders from './pages/Orders'
 import Profile from './pages/Profile'
+import TestProfile from './pages/TestProfile'
 import AdminDashboard from './pages/AdminDashboard'
 import OrderManagement from './pages/OrderManagement'
 import Inventory from './pages/Inventory'
@@ -47,7 +48,7 @@ function App() {
           <Route path="/profile" element={
             <ProtectedRoute>
               <Layout currentPageName="Profile">
-                <Profile />
+                <TestProfile />
               </Layout>
             </ProtectedRoute>
           } />

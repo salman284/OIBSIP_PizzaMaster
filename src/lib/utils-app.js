@@ -5,6 +5,7 @@ export function createPageUrl(pageName) {
     Dashboard: "/",
     PizzaBuilder: "/pizza-builder", 
     Orders: "/orders",
+    Profile: "/profile",
     AdminDashboard: "/admin-dashboard",
     OrderManagement: "/order-management",
     Inventory: "/inventory"

@@ -134,6 +134,26 @@ export default function Layout({ children, currentPageName }) {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+                  
+                  {/* Logout Menu Item */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      asChild
+                      className="hover:bg-red-100 hover:text-red-800 transition-all duration-200 rounded-xl mb-2 text-red-600"
+                    >
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to logout?')) {
+                            logout();
+                          }
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 w-full text-left"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium">Logout</span>
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
