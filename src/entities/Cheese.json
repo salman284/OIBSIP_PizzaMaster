@@ -1,0 +1,32 @@
+{
+  "name": "Cheese",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the cheese"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the cheese"
+    },
+    "price": {
+      "type": "number",
+      "description": "Additional price for this cheese"
+    },
+    "stock": {
+      "type": "number",
+      "default": 25,
+      "description": "Current stock level"
+    },
+    "min_threshold": {
+      "type": "number",
+      "default": 5,
+      "description": "Minimum stock threshold"
+    }
+  },
+  "required": [
+    "name",
+    "price"
+  ]
+}

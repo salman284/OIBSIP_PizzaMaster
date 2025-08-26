@@ -1,0 +1,36 @@
+{
+  "name": "Sauce",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the sauce"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the sauce"
+    },
+    "price": {
+      "type": "number",
+      "description": "Additional price for this sauce"
+    },
+    "stock": {
+      "type": "number",
+      "default": 30,
+      "description": "Current stock level"
+    },
+    "min_threshold": {
+      "type": "number",
+      "default": 5,
+      "description": "Minimum stock threshold"
+    },
+    "color": {
+      "type": "string",
+      "description": "Color representation of sauce"
+    }
+  },
+  "required": [
+    "name",
+    "price"
+  ]
+}

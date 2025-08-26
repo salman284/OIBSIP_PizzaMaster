@@ -1,0 +1,36 @@
+{
+  "name": "PizzaBase",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the pizza base"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the base"
+    },
+    "price": {
+      "type": "number",
+      "description": "Additional price for this base"
+    },
+    "stock": {
+      "type": "number",
+      "default": 50,
+      "description": "Current stock level"
+    },
+    "min_threshold": {
+      "type": "number",
+      "default": 10,
+      "description": "Minimum stock threshold"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Image URL for the base"
+    }
+  },
+  "required": [
+    "name",
+    "price"
+  ]
+}

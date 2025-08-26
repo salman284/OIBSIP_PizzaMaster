@@ -1,0 +1,73 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string",
+      "description": "Email of the customer who placed the order"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Name of the customer"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Phone number for delivery"
+    },
+    "delivery_address": {
+      "type": "string",
+      "description": "Delivery address"
+    },
+    "pizza_base": {
+      "type": "string",
+      "description": "Selected pizza base"
+    },
+    "sauce": {
+      "type": "string",
+      "description": "Selected sauce"
+    },
+    "cheese": {
+      "type": "string",
+      "description": "Selected cheese"
+    },
+    "toppings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Selected toppings"
+    },
+    "total_price": {
+      "type": "number",
+      "description": "Total order price"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "confirmed",
+        "in_kitchen",
+        "out_for_delivery",
+        "delivered"
+      ],
+      "default": "pending",
+      "description": "Order status"
+    },
+    "special_instructions": {
+      "type": "string",
+      "description": "Special delivery instructions"
+    },
+    "estimated_delivery": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Estimated delivery time"
+    }
+  },
+  "required": [
+    "customer_email",
+    "pizza_base",
+    "sauce",
+    "cheese",
+    "total_price"
+  ]
+}

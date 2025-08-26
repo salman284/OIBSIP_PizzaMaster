@@ -1,0 +1,46 @@
+{
+  "name": "Topping",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the topping"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the topping"
+    },
+    "price": {
+      "type": "number",
+      "description": "Additional price for this topping"
+    },
+    "stock": {
+      "type": "number",
+      "default": 20,
+      "description": "Current stock level"
+    },
+    "min_threshold": {
+      "type": "number",
+      "default": 3,
+      "description": "Minimum stock threshold"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "vegetable",
+        "meat",
+        "other"
+      ],
+      "description": "Category of topping"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Image URL for the topping"
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "category"
+  ]
+}
