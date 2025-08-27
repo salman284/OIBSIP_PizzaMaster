@@ -1,32 +1,52 @@
-// Base44 User Entity
-const API_BASE = "https://app.base44.com/api/apps/68a7545c1bd5a111d65d34b6";
-const API_KEY = "5cee5299004742998d9425143f63ec8e";
+// Local API User Entity
+const API_BASE = "/api"; // Use proxy to backend
+
+// Helper function to get auth token
+const getAuthToken = () => {
+  return localStorage.getItem('token');
+};
+
+// Helper function for authenticated requests
+const fetchWithAuth = async (url, options = {}) => {
+  const token = getAuthToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...options.headers
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Network error' }));
+    throw new Error(error.error || `HTTP ${response.status}`);
+  }
+
+  return await response.json();
+};
 
 export class User {
   static async me() {
     try {
-      const response = await fetch(`${API_BASE}/auth/me`, {
-        headers: {
-          'api_key': API_KEY,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Not authenticated');
-      return await response.json();
+      const data = await fetchWithAuth(`${API_BASE}/users/me`);
+      return data.data;
     } catch (error) {
       throw new Error('User not authenticated');
     }
   }
 
-  static async updateMyUserData(data) {
-    const response = await fetch(`${API_BASE}/auth/me`, {
-      method: 'PUT',
-      headers: {
-        'api_key': API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    return await response.json();
+  static async updateMyUserData(userData) {
+    try {
+      const data = await fetchWithAuth(`${API_BASE}/users/me`, {
+        method: 'PUT',
+        body: JSON.stringify(userData)
+      });
+      return data.data;
+    } catch (error) {
+      throw new Error('Failed to update user data');
+    }
   }
 }

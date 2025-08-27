@@ -28,26 +28,6 @@ const fetchWithAuth = async (url, options = {}) => {
   return await response.json();
 };
 
-// Helper function for public requests (no authentication required)
-const fetchPublic = async (url, options = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    headers
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Network error' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
-  }
-
-  return await response.json();
-};
-
 // User Entity
 export class User {
   static async me() {
@@ -76,7 +56,7 @@ export class User {
 export class PizzaBase {
   static async list() {
     try {
-      const data = await fetchPublic(`${API_BASE}/pizza-bases`);
+      const data = await fetchWithAuth(`${API_BASE}/pizza-bases`);
       return data.data || data;
     } catch (error) {
       console.error('Failed to fetch pizza bases:', error);
@@ -109,7 +89,7 @@ export class PizzaBase {
 export class Sauce {
   static async list() {
     try {
-      const data = await fetchPublic(`${API_BASE}/sauces`);
+      const data = await fetchWithAuth(`${API_BASE}/sauces`);
       return data.data || data;
     } catch (error) {
       console.error('Failed to fetch sauces:', error);
@@ -142,7 +122,7 @@ export class Sauce {
 export class Cheese {
   static async list() {
     try {
-      const data = await fetchPublic(`${API_BASE}/cheeses`);
+      const data = await fetchWithAuth(`${API_BASE}/cheeses`);
       return data.data || data;
     } catch (error) {
       console.error('Failed to fetch cheeses:', error);
@@ -175,7 +155,7 @@ export class Cheese {
 export class Topping {
   static async list() {
     try {
-      const data = await fetchPublic(`${API_BASE}/toppings`);
+      const data = await fetchWithAuth(`${API_BASE}/toppings`);
       return data.data || data;
     } catch (error) {
       console.error('Failed to fetch toppings:', error);

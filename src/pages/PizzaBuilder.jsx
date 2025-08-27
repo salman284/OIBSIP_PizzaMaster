@@ -39,19 +39,30 @@ export default function PizzaBuilder() {
   useEffect(() => {
     const loadIngredients = async () => {
       try {
-        const [bases, sauces, cheeses, toppings, currentUser] = await Promise.all([
+        // Load ingredients first (these are public)
+        const [bases, sauces, cheeses, toppings] = await Promise.all([
           PizzaBase.list(),
           Sauce.list(),
           Cheese.list(), 
-          Topping.list(),
-          User.me()
+          Topping.list()
         ]);
         
         setIngredients({ bases, sauces, cheeses, toppings });
-        setUser(currentUser);
         
-        if (currentUser.phone) setCustomerInfo(prev => ({ ...prev, phone: currentUser.phone }));
-        if (currentUser.address) setCustomerInfo(prev => ({ ...prev, address: currentUser.address }));
+        // Try to load user data, but don't fail if not authenticated
+        try {
+          const currentUser = await User.me();
+          setUser(currentUser);
+          console.log("User loaded successfully:", currentUser);
+          if (currentUser.phone) setCustomerInfo(prev => ({ ...prev, phone: currentUser.phone }));
+          if (currentUser.address) setCustomerInfo(prev => ({ ...prev, address: currentUser.address }));
+        } catch (userError) {
+          console.log("User authentication error:", userError);
+          console.log("Token in localStorage:", localStorage.getItem('token'));
+          setUser(null);
+          // User is not logged in, but that's okay for browsing ingredients
+        }
+        
       } catch (error) {
         console.error("Error loading ingredients:", error);
       }
@@ -72,8 +83,8 @@ export default function PizzaBuilder() {
   const handleToppingToggle = (topping) => {
     setSelection(prev => ({
       ...prev,
-      toppings: prev.toppings.find(t => t.id === topping.id)
-        ? prev.toppings.filter(t => t.id !== topping.id)
+      toppings: prev.toppings.find(t => t._id === topping._id)
+        ? prev.toppings.filter(t => t._id !== topping._id)
         : [...prev.toppings, topping]
     }));
   };
@@ -81,6 +92,14 @@ export default function PizzaBuilder() {
   const placeOrder = async () => {
     if (!selection.base || !selection.sauce || !selection.cheese) {
       alert("Please complete your pizza selection");
+      return;
+    }
+    
+    console.log("Current user state:", user);
+    console.log("Token:", localStorage.getItem('token'));
+    
+    if (!user) {
+      alert("Please log in to place an order. If you are already logged in, please refresh the page.");
       return;
     }
     
@@ -146,17 +165,36 @@ export default function PizzaBuilder() {
       <div className="max-w-6xl mx-auto">
         {/* Progress Steps */}
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center relative">
+            {/* Progress line */}
+            <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 rounded-full z-0">
+              <div 
+                className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full transition-all duration-500 ease-in-out"
+                style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
+              ></div>
+            </div>
+            
             {steps.map((s) => (
-              <div key={s.number} className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                  step >= s.number 
-                    ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white' 
-                    : 'bg-gray-200 text-gray-500'
-                }`}>
-                  {step > s.number ? <Check className="w-5 h-5" /> : s.number}
-                </div>
-                <span className="text-xs mt-2 text-center font-medium">{s.title}</span>
+              <div key={s.number} className="flex flex-col items-center relative z-10">
+                <motion.div 
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm border-4 transition-all duration-300 ${
+                    step >= s.number 
+                      ? 'bg-gradient-to-r from-red-600 to-orange-500 text-white border-white shadow-lg scale-110' 
+                      : step === s.number - 1
+                      ? 'bg-white text-red-600 border-red-300 shadow-md'
+                      : 'bg-gray-100 text-gray-400 border-gray-200'
+                  }`}
+                  whileHover={{ scale: step >= s.number ? 1.2 : 1.05 }}
+                  animate={{ 
+                    scale: step >= s.number ? 1.1 : 1,
+                    boxShadow: step >= s.number ? "0 8px 25px rgba(239, 68, 68, 0.3)" : "0 4px 15px rgba(0, 0, 0, 0.1)"
+                  }}
+                >
+                  {step > s.number ? <Check className="w-6 h-6" /> : s.number}
+                </motion.div>
+                <span className={`text-sm mt-3 text-center font-medium transition-colors ${
+                  step >= s.number ? 'text-red-600' : 'text-gray-500'
+                }`}>{s.title}</span>
               </div>
             ))}
           </div>
@@ -178,25 +216,46 @@ export default function PizzaBuilder() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {ingredients.bases.map((base) => (
                       <motion.div
-                        key={base.id}
-                        whileHover={{ scale: 1.05 }}
+                        key={base._id}
+                        whileHover={{ scale: 1.05, y: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                          selection.base?.id === base.id
-                            ? 'border-red-600 bg-red-50 shadow-lg'
-                            : 'border-gray-200 hover:border-red-300 hover:bg-red-25'
+                        className={`relative p-6 border-3 rounded-2xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-2xl ${
+                          selection.base?._id === base._id
+                            ? 'border-red-500 bg-gradient-to-br from-red-50 to-orange-50 shadow-red-200 ring-4 ring-red-200'
+                            : 'border-gray-200 hover:border-red-300 hover:bg-gradient-to-br hover:from-red-25 hover:to-orange-25 bg-white'
                         }`}
                         onClick={() => setSelection(prev => ({ ...prev, base }))}
                       >
-                        {base.image_url && (
-                          <img src={base.image_url} alt={base.name} className="w-full h-32 object-cover rounded-lg mb-4" />
+                        {/* Selection indicator */}
+                        {selection.base?._id === base._id && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg z-10"
+                          >
+                            <Check className="w-5 h-5 text-white" />
+                          </motion.div>
                         )}
-                        <h3 className="font-bold text-lg text-gray-900 mb-2">{base.name}</h3>
-                        <p className="text-gray-600 text-sm mb-3">{base.description}</p>
+                        
+                        {/* Pizza base icon */}
+                        <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-amber-100 to-orange-200 rounded-full flex items-center justify-center border-4 border-amber-200">
+                          <div className="w-12 h-12 bg-gradient-to-br from-amber-200 to-orange-300 rounded-full border-2 border-amber-300"></div>
+                        </div>
+                        
+                        <h3 className={`font-bold text-xl text-center mb-2 transition-colors ${
+                          selection.base?._id === base._id ? 'text-red-700' : 'text-gray-900'
+                        }`}>{base.name}</h3>
+                        <p className="text-gray-600 text-sm mb-4 text-center leading-relaxed">{base.description}</p>
                         <div className="flex justify-between items-center">
-                          <span className="font-bold text-red-600">${base.price.toFixed(2)}</span>
-                          <Badge variant="outline" className={base.stock < base.min_threshold ? 'border-red-500 text-red-700' : 'border-green-500 text-green-700'}>
-                            {base.stock} left
+                          <span className={`font-bold text-lg ${
+                            selection.base?.id === base.id ? 'text-red-600' : 'text-red-500'
+                          }`}>${base.price.toFixed(2)}</span>
+                          <Badge variant="outline" className={`${
+                            base.stockQuantity < 10 
+                              ? 'border-red-500 text-red-700 bg-red-50' 
+                              : 'border-green-500 text-green-700 bg-green-50'
+                          } font-medium`}>
+                            {base.stockQuantity} left
                           </Badge>
                         </div>
                       </motion.div>
@@ -206,7 +265,7 @@ export default function PizzaBuilder() {
                     <Button 
                       onClick={() => setStep(2)} 
                       disabled={!selection.base}
-                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8"
+                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8 py-3 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next: Choose Sauce
                     </Button>
@@ -231,36 +290,67 @@ export default function PizzaBuilder() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {ingredients.sauces.map((sauce) => (
                       <motion.div
-                        key={sauce.id}
-                        whileHover={{ scale: 1.05 }}
+                        key={sauce._id}
+                        whileHover={{ scale: 1.05, y: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                          selection.sauce?.id === sauce.id
-                            ? 'border-red-600 bg-red-50 shadow-lg'
-                            : 'border-gray-200 hover:border-red-300'
+                        className={`relative p-6 border-3 rounded-2xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-2xl ${
+                          selection.sauce?._id === sauce._id
+                            ? 'border-red-500 bg-gradient-to-br from-red-50 to-orange-50 shadow-red-200 ring-4 ring-red-200'
+                            : 'border-gray-200 hover:border-red-300 hover:bg-gradient-to-br hover:from-red-25 hover:to-orange-25 bg-white'
                         }`}
                         onClick={() => setSelection(prev => ({ ...prev, sauce }))}
                       >
-                        <div className={`w-16 h-16 rounded-full mx-auto mb-4 border-4 border-gray-200`} 
-                             style={{ backgroundColor: sauce.color || '#dc2626' }}>
+                        {/* Selection indicator */}
+                        {selection.sauce?._id === sauce._id && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg z-10"
+                          >
+                            <Check className="w-5 h-5 text-white" />
+                          </motion.div>
+                        )}
+                        
+                        {/* Sauce visual representation */}
+                        <div className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-gray-200 shadow-inner relative overflow-hidden" 
+                             style={{ 
+                               background: sauce.name.includes('Tomato') ? 'linear-gradient(145deg, #dc2626, #b91c1c)' :
+                                          sauce.name.includes('BBQ') ? 'linear-gradient(145deg, #92400e, #78350f)' :
+                                          sauce.name.includes('White') ? 'linear-gradient(145deg, #f3f4f6, #e5e7eb)' :
+                                          sauce.name.includes('Pesto') ? 'linear-gradient(145deg, #16a34a, #15803d)' :
+                                          sauce.name.includes('Buffalo') ? 'linear-gradient(145deg, #ea580c, #c2410c)' :
+                                          'linear-gradient(145deg, #dc2626, #b91c1c)'
+                             }}>
+                          <div className="absolute inset-2 rounded-full bg-white/20"></div>
                         </div>
-                        <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">{sauce.name}</h3>
-                        <p className="text-gray-600 text-sm mb-3 text-center">{sauce.description}</p>
+                        
+                        <h3 className={`font-bold text-xl text-center mb-2 transition-colors ${
+                          selection.sauce?._id === sauce._id ? 'text-red-700' : 'text-gray-900'
+                        }`}>{sauce.name}</h3>
+                        <p className="text-gray-600 text-sm mb-4 text-center leading-relaxed">{sauce.description}</p>
                         <div className="flex justify-between items-center">
-                          <span className="font-bold text-red-600">${sauce.price.toFixed(2)}</span>
-                          <Badge variant="outline" className={sauce.stock < sauce.min_threshold ? 'border-red-500 text-red-700' : 'border-green-500 text-green-700'}>
-                            {sauce.stock} left
+                          <span className={`font-bold text-lg ${
+                            selection.sauce?._id === sauce._id ? 'text-red-600' : 'text-red-500'
+                          }`}>${sauce.price.toFixed(2)}</span>
+                          <Badge variant="outline" className={`${
+                            sauce.stockQuantity < 10 
+                              ? 'border-red-500 text-red-700 bg-red-50' 
+                              : 'border-green-500 text-green-700 bg-green-50'
+                          } font-medium`}>
+                            {sauce.stockQuantity} left
                           </Badge>
                         </div>
                       </motion.div>
                     ))}
                   </div>
                   <div className="flex justify-between mt-8">
-                    <Button variant="outline" onClick={() => setStep(1)}>Previous</Button>
+                    <Button variant="outline" onClick={() => setStep(1)} className="px-6 py-3">
+                      Previous
+                    </Button>
                     <Button 
                       onClick={() => setStep(3)} 
                       disabled={!selection.sauce}
-                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8"
+                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8 py-3 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next: Pick Cheese
                     </Button>
@@ -285,33 +375,64 @@ export default function PizzaBuilder() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {ingredients.cheeses.map((cheese) => (
                       <motion.div
-                        key={cheese.id}
-                        whileHover={{ scale: 1.05 }}
+                        key={cheese._id}
+                        whileHover={{ scale: 1.05, y: -5 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
-                          selection.cheese?.id === cheese.id
-                            ? 'border-red-600 bg-red-50 shadow-lg'
-                            : 'border-gray-200 hover:border-red-300'
+                        className={`relative p-6 border-3 rounded-2xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-2xl ${
+                          selection.cheese?._id === cheese._id
+                            ? 'border-red-500 bg-gradient-to-br from-red-50 to-orange-50 shadow-red-200 ring-4 ring-red-200'
+                            : 'border-gray-200 hover:border-red-300 hover:bg-gradient-to-br hover:from-red-25 hover:to-orange-25 bg-white'
                         }`}
                         onClick={() => setSelection(prev => ({ ...prev, cheese }))}
                       >
-                        <h3 className="font-bold text-lg text-gray-900 mb-2 text-center">{cheese.name}</h3>
-                        <p className="text-gray-600 text-sm mb-3 text-center">{cheese.description}</p>
+                        {/* Selection indicator */}
+                        {selection.cheese?._id === cheese._id && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg z-10"
+                          >
+                            <Check className="w-5 h-5 text-white" />
+                          </motion.div>
+                        )}
+                        
+                        {/* Cheese visual representation */}
+                        <div className="w-20 h-20 mx-auto mb-4 relative">
+                          <div className="w-full h-full bg-gradient-to-br from-yellow-200 to-orange-300 rounded-lg border-4 border-yellow-300 shadow-lg transform rotate-3">
+                            <div className="absolute inset-2 bg-gradient-to-br from-yellow-100 to-orange-200 rounded-lg"></div>
+                            <div className="absolute top-3 left-3 w-2 h-2 bg-yellow-400 rounded-full"></div>
+                            <div className="absolute bottom-4 right-3 w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                            <div className="absolute top-6 right-4 w-1 h-1 bg-yellow-400 rounded-full"></div>
+                          </div>
+                        </div>
+                        
+                        <h3 className={`font-bold text-xl text-center mb-2 transition-colors ${
+                          selection.cheese?._id === cheese._id ? 'text-red-700' : 'text-gray-900'
+                        }`}>{cheese.name}</h3>
+                        <p className="text-gray-600 text-sm mb-4 text-center leading-relaxed">{cheese.description}</p>
                         <div className="flex justify-between items-center">
-                          <span className="font-bold text-red-600">${cheese.price.toFixed(2)}</span>
-                          <Badge variant="outline" className={cheese.stock < cheese.min_threshold ? 'border-red-500 text-red-700' : 'border-green-500 text-green-700'}>
-                            {cheese.stock} left
+                          <span className={`font-bold text-lg ${
+                            selection.cheese?._id === cheese._id ? 'text-red-600' : 'text-red-500'
+                          }`}>${cheese.price.toFixed(2)}</span>
+                          <Badge variant="outline" className={`${
+                            cheese.stockQuantity < 10 
+                              ? 'border-red-500 text-red-700 bg-red-50' 
+                              : 'border-green-500 text-green-700 bg-green-50'
+                          } font-medium`}>
+                            {cheese.stockQuantity} left
                           </Badge>
                         </div>
                       </motion.div>
                     ))}
                   </div>
                   <div className="flex justify-between mt-8">
-                    <Button variant="outline" onClick={() => setStep(2)}>Previous</Button>
+                    <Button variant="outline" onClick={() => setStep(2)} className="px-6 py-3">
+                      Previous
+                    </Button>
                     <Button 
                       onClick={() => setStep(4)} 
                       disabled={!selection.cheese}
-                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8"
+                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8 py-3 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next: Add Toppings
                     </Button>
@@ -337,42 +458,77 @@ export default function PizzaBuilder() {
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {ingredients.toppings.map((topping) => (
                       <motion.div
-                        key={topping.id}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          selection.toppings.find(t => t.id === topping.id)
-                            ? 'border-red-600 bg-red-50'
-                            : 'border-gray-200 hover:border-red-300'
+                        key={topping._id}
+                        whileHover={{ scale: 1.05, y: -3 }}
+                        whileTap={{ scale: 0.95 }}
+                        className={`relative p-4 border-3 rounded-xl cursor-pointer transition-all duration-300 shadow-lg hover:shadow-xl ${
+                          selection.toppings.find(t => t._id === topping._id)
+                            ? 'border-red-500 bg-gradient-to-br from-red-50 to-orange-50 shadow-red-200 ring-2 ring-red-200'
+                            : 'border-gray-200 hover:border-red-300 hover:bg-gradient-to-br hover:from-red-25 hover:to-orange-25 bg-white'
                         }`}
                         onClick={() => handleToppingToggle(topping)}
                       >
-                        {topping.image_url && (
-                          <img src={topping.image_url} alt={topping.name} className="w-12 h-12 object-cover rounded mx-auto mb-2" />
+                        {/* Selection indicator */}
+                        {selection.toppings.find(t => t._id === topping._id) && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg z-10"
+                          >
+                            <Check className="w-3 h-3 text-white" />
+                          </motion.div>
                         )}
-                        <h4 className="font-medium text-sm text-gray-900 text-center mb-1">{topping.name}</h4>
-                        <p className="text-xs text-gray-600 text-center mb-2">{topping.description}</p>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-red-600">${topping.price.toFixed(2)}</span>
-                          {selection.toppings.find(t => t.id === topping.id) && (
-                            <Check className="w-4 h-4 text-red-600" />
-                          )}
+                        
+                        {/* Topping visual representation */}
+                        <div className="w-14 h-14 mx-auto mb-3 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center border-3 border-green-200 shadow-md">
+                          <div className={`w-8 h-8 rounded-full ${
+                            topping.name.toLowerCase().includes('pepper') ? 'bg-gradient-to-br from-red-400 to-red-600' :
+                            topping.name.toLowerCase().includes('mushroom') ? 'bg-gradient-to-br from-amber-600 to-amber-800' :
+                            topping.name.toLowerCase().includes('onion') ? 'bg-gradient-to-br from-purple-300 to-purple-500' :
+                            topping.name.toLowerCase().includes('olive') ? 'bg-gradient-to-br from-gray-700 to-gray-900' :
+                            topping.name.toLowerCase().includes('tomato') ? 'bg-gradient-to-br from-red-400 to-red-600' :
+                            'bg-gradient-to-br from-green-400 to-green-600'
+                          }`}></div>
                         </div>
-                        <Badge variant="outline" className={`text-xs mt-1 ${topping.stock < topping.min_threshold ? 'border-red-500 text-red-700' : 'border-green-500 text-green-700'}`}>
-                          {topping.stock} left
+                        
+                        <h4 className={`font-bold text-sm text-center mb-1 transition-colors ${
+                          selection.toppings.find(t => t._id === topping._id) ? 'text-red-700' : 'text-gray-900'
+                        }`}>{topping.name}</h4>
+                        <p className="text-xs text-gray-600 text-center mb-2 leading-relaxed">{topping.description}</p>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className={`font-bold ${
+                            selection.toppings.find(t => t._id === topping._id) ? 'text-red-600' : 'text-red-500'
+                          }`}>${topping.price.toFixed(2)}</span>
+                        </div>
+                        <Badge variant="outline" className={`text-xs mt-1 w-full justify-center ${
+                          topping.stockQuantity < 10 
+                            ? 'border-red-500 text-red-700 bg-red-50' 
+                            : 'border-green-500 text-green-700 bg-green-50'
+                        }`}>
+                          {topping.stockQuantity} left
                         </Badge>
                       </motion.div>
                     ))}
                   </div>
                   <div className="flex justify-between items-center mt-8">
-                    <Button variant="outline" onClick={() => setStep(3)}>Previous</Button>
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600">Selected toppings: {selection.toppings.length}</p>
-                      <p className="font-bold text-lg text-red-600">Total: ${calculateTotal().toFixed(2)}</p>
+                    <Button variant="outline" onClick={() => setStep(3)} className="px-6 py-3">
+                      Previous
+                    </Button>
+                    <div className="text-center bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-xl border-2 border-red-200">
+                      <p className="text-sm text-gray-600 mb-1">Selected toppings: {selection.toppings.length}</p>
+                      <motion.p 
+                        className="font-bold text-2xl text-red-600"
+                        key={calculateTotal()}
+                        initial={{ scale: 1.2 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        Total: ${calculateTotal().toFixed(2)}
+                      </motion.p>
                     </div>
                     <Button 
                       onClick={() => setStep(5)} 
-                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8"
+                      className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 px-8 py-3 shadow-lg hover:shadow-xl transition-all"
                     >
                       Review Order
                     </Button>
@@ -414,7 +570,7 @@ export default function PizzaBuilder() {
                     <div className="space-y-2">
                       <span className="font-medium">Toppings:</span>
                       {selection.toppings.map((topping) => (
-                        <div key={topping.id} className="flex justify-between items-center text-sm">
+                        <div key={topping._id} className="flex justify-between items-center text-sm">
                           <span>• {topping.name}</span>
                           <span>${topping.price.toFixed(2)}</span>
                         </div>
@@ -432,6 +588,17 @@ export default function PizzaBuilder() {
                 <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
                   <CardHeader>
                     <CardTitle className="text-2xl font-bold text-gray-900">Delivery Information</CardTitle>
+                    {/* Login Status Indicator */}
+                    {user ? (
+                      <div className="flex items-center gap-2 text-green-600">
+                        <Check className="w-5 h-5" />
+                        <span className="text-sm">Logged in as {user.full_name || user.email}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-red-600">
+                        <span className="text-sm">⚠️ You need to log in to place an order</span>
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>

@@ -45,6 +45,13 @@ const seedData = async () => {
         price: 13.99,
         stockQuantity: 20,
         isActive: true
+      },
+      {
+        name: 'Cauliflower Crust',
+        description: 'Healthy cauliflower-based crust',
+        price: 14.99,
+        stockQuantity: 25,
+        isActive: true
       }
     ]);
 
@@ -76,6 +83,13 @@ const seedData = async () => {
         description: 'Fresh basil pesto sauce',
         price: 1.99,
         stockQuantity: 60,
+        isActive: true
+      },
+      {
+        name: 'Buffalo Sauce',
+        description: 'Spicy buffalo wing sauce',
+        price: 1.79,
+        stockQuantity: 50,
         isActive: true
       }
     ]);
