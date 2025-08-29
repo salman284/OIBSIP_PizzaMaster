@@ -1,39 +1,93 @@
-// Order Entity
-const API_BASE = "https://app.base44.com/api/apps/68a7545c1bd5a111d65d34b6";
-const API_KEY = "5cee5299004742998d9425143f63ec8e";
+// Local API Order Entity
+const API_BASE = "/api"; // Use proxy to backend
+
+// Helper function to get auth token
+const getAuthToken = () => {
+  return localStorage.getItem('token');
+};
+
+// Helper function for authenticated requests
+const fetchWithAuth = async (url, options = {}) => {
+  const token = getAuthToken();
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  });
+};
 
 export class Order {
   static async list() {
-    const response = await fetch(`${API_BASE}/entities/Order`, {
-      headers: {
-        'api_key': API_KEY,
-        'Content-Type': 'application/json'
+    try {
+      const response = await fetchWithAuth(`${API_BASE}/orders`, {
+        method: 'GET'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    });
-    return await response.json();
+      
+      const data = await response.json();
+      return data.orders || data || [];
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      return [];
+    }
   }
 
-  static async create(data) {
-    const response = await fetch(`${API_BASE}/entities/Order`, {
-      method: 'POST',
-      headers: {
-        'api_key': API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    return await response.json();
+  static async create(orderData) {
+    try {
+      const response = await fetchWithAuth(`${API_BASE}/orders`, {
+        method: 'POST',
+        body: JSON.stringify(orderData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
   }
 
   static async update(id, data) {
-    const response = await fetch(`${API_BASE}/entities/Order/${id}`, {
-      method: 'PUT',
-      headers: {
-        'api_key': API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    return await response.json();
+    try {
+      const response = await fetchWithAuth(`${API_BASE}/orders/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating order:', error);
+      throw error;
+    }
+  }
+
+  static async getById(id) {
+    try {
+      const response = await fetchWithAuth(`${API_BASE}/orders/${id}`, {
+        method: 'GET'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      throw error;
+    }
   }
 }

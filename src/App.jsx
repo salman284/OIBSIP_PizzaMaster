@@ -1,12 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
-import Layout from './components/Layout'
+import Layout from '../Layout'
 import Dashboard from './pages/Dashboard'
 import PizzaBuilder from './pages/PizzaBuilder'
 import Orders from './pages/Orders'
 import Profile from './pages/Profile'
-import TestProfile from './pages/TestProfile'
 import AdminDashboard from './pages/AdminDashboard'
 import OrderManagement from './pages/OrderManagement'
 import Inventory from './pages/Inventory'
@@ -48,7 +47,7 @@ function App() {
           <Route path="/profile" element={
             <ProtectedRoute>
               <Layout currentPageName="Profile">
-                <TestProfile />
+                <Profile />
               </Layout>
             </ProtectedRoute>
           } />

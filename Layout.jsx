@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { Pizza, ShoppingCart, Package, Settings, Users, Home } from "lucide-react";
-import { User } from "@/entities/User";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { createPageUrl } from "./src/lib/utils-app";
+import { Pizza, ShoppingCart, Package, Settings, Users, Home, LogOut, User as UserIcon } from "lucide-react";
+import { User } from "./src/entities/User";
+import { useAuth } from "./src/context/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -20,19 +21,29 @@ import {
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
-  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const loadUser = async () => {
+    const loadUserData = async () => {
       try {
-        const currentUser = await User.me();
-        setUser(currentUser);
+        if (user) {
+          const fullUserData = await User.me();
+          setUserData(fullUserData);
+        }
       } catch (error) {
-        console.log("User not authenticated");
+        console.error('Error loading user data:', error);
       }
     };
-    loadUser();
-  }, []);
+
+    loadUserData();
+  }, [user]);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const customerNavigation = [
     {
@@ -128,14 +139,39 @@ export default function Layout({ children, currentPageName }) {
           </SidebarContent>
 
           <SidebarFooter className="border-t border-orange-200 p-6">
-            {user && (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-white" />
+            {(user || userData) && (
+              <div className="space-y-4">
+                {/* User Info */}
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">
+                      {userData?.name || user?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-orange-600 truncate capitalize">
+                      {userData?.role || user?.role || 'Customer'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm truncate">{user.full_name}</p>
-                  <p className="text-xs text-orange-600 truncate capitalize">{user.role}</p>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Link 
+                    to="/profile" 
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 text-sm font-medium"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    Profile
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 text-sm font-medium"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
                 </div>
               </div>
             )}
