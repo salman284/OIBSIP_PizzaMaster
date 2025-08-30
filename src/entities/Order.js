@@ -30,8 +30,16 @@ export class Order {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      return data.orders || data || [];
+      const result = await response.json();
+      console.log("Order.list response:", result); // Debug log
+      
+      // Handle the backend response format: { success: true, count: X, data: [...] }
+      if (result.success && result.data) {
+        return result.data;
+      }
+      
+      // Fallback for other response formats
+      return result.orders || result || [];
     } catch (error) {
       console.error('Error fetching orders:', error);
       return [];

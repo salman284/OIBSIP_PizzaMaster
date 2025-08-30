@@ -24,164 +24,153 @@ const transporter = nodemailer.createTransport({
 // @access  Private
 const createOrder = async (req, res) => {
   try {
-    const { items, deliveryAddress, paymentMethod, specialInstructions } = req.body;
+    const { 
+      customer_email, 
+      customer_name, 
+      customer_phone, 
+      delivery_address, 
+      pizza_base, 
+      sauce, 
+      cheese, 
+      toppings = [], 
+      total_price, 
+      special_instructions,
+      payment_method 
+    } = req.body;
 
-    // Validate and calculate order total
-    let orderTotal = 0;
-    const processedItems = [];
-
-    for (const item of items) {
-      const { pizzaBase, sauce, cheese, toppings, size, quantity } = item;
-
-      // Get pizza base
-      const baseData = await PizzaBase.findById(pizzaBase);
-      if (!baseData || baseData.stockQuantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          error: `Insufficient stock for pizza base: ${baseData?.name || 'Unknown'}`
-        });
-      }
-
-      // Get sauce
-      const sauceData = await Sauce.findById(sauce);
-      if (!sauceData || sauceData.stockQuantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          error: `Insufficient stock for sauce: ${sauceData?.name || 'Unknown'}`
-        });
-      }
-
-      // Get cheese
-      const cheeseData = await Cheese.findById(cheese);
-      if (!cheeseData || cheeseData.stockQuantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          error: `Insufficient stock for cheese: ${cheeseData?.name || 'Unknown'}`
-        });
-      }
-
-      // Calculate item price
-      let itemPrice = baseData.price + sauceData.price + cheeseData.price;
-
-      // Add toppings
-      const toppingDetails = [];
-      for (const toppingId of toppings) {
-        const toppingData = await Topping.findById(toppingId);
-        if (!toppingData || toppingData.stockQuantity < quantity) {
-          return res.status(400).json({
-            success: false,
-            error: `Insufficient stock for topping: ${toppingData?.name || 'Unknown'}`
-          });
-        }
-        itemPrice += toppingData.price;
-        toppingDetails.push({
-          toppingId: toppingData._id,
-          name: toppingData.name,
-          price: toppingData.price
-        });
-      }
-
-      // Apply size multiplier
-      const sizeMultiplier = size === 'large' ? 1.5 : size === 'medium' ? 1.25 : 1;
-      itemPrice *= sizeMultiplier;
-
-      const totalItemPrice = itemPrice * quantity;
-      orderTotal += totalItemPrice;
-
-      processedItems.push({
-        pizzaBase: {
-          pizzaBaseId: baseData._id,
-          name: baseData.name,
-          price: baseData.price
-        },
-        sauce: {
-          sauceId: sauceData._id,
-          name: sauceData.name,
-          price: sauceData.price
-        },
-        cheese: {
-          cheeseId: cheeseData._id,
-          name: cheeseData.name,
-          price: cheeseData.price
-        },
-        toppings: toppingDetails,
-        size,
-        quantity,
-        unitPrice: itemPrice,
-        totalPrice: totalItemPrice
+    // Validate required fields
+    if (!pizza_base?.id || !sauce?.id || !cheese?.id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Pizza base, sauce, and cheese are required'
       });
     }
 
-    // Create order
+    // Validate stock quantities
+    const baseData = await PizzaBase.findById(pizza_base.id);
+    if (!baseData || baseData.stockQuantity < 1) {
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient stock for pizza base: ${pizza_base.name}`
+      });
+    }
+
+    const sauceData = await Sauce.findById(sauce.id);
+    if (!sauceData || sauceData.stockQuantity < 1) {
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient stock for sauce: ${sauce.name}`
+      });
+    }
+
+    const cheeseData = await Cheese.findById(cheese.id);
+    if (!cheeseData || cheeseData.stockQuantity < 1) {
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient stock for cheese: ${cheese.name}`
+      });
+    }
+
+    // Validate toppings stock
+    for (const topping of toppings) {
+      const toppingData = await Topping.findById(topping.id);
+      if (!toppingData || toppingData.stockQuantity < 1) {
+        return res.status(400).json({
+          success: false,
+          error: `Insufficient stock for topping: ${topping.name}`
+        });
+      }
+    }
+
+    // Create order with the correct structure for the Order model
     const order = await Order.create({
       user: req.user.id,
-      items: processedItems,
-      totalAmount: orderTotal,
-      deliveryAddress,
-      paymentMethod,
-      specialInstructions
+      customer_email: customer_email || req.user.email,
+      customer_name: customer_name || `${req.user.firstName} ${req.user.lastName}`,
+      customer_phone,
+      delivery_address,
+      pizza_base: {
+        id: pizza_base.id,
+        name: pizza_base.name,
+        price: pizza_base.price
+      },
+      sauce: {
+        id: sauce.id,
+        name: sauce.name,
+        price: sauce.price
+      },
+      cheese: {
+        id: cheese.id,
+        name: cheese.name,
+        price: cheese.price
+      },
+      toppings: toppings.map(topping => ({
+        id: topping.id,
+        name: topping.name,
+        price: topping.price
+      })),
+      total_price,
+      special_instructions,
+      payment_method: payment_method || 'cash'
     });
+
+    console.log("Order created successfully:", {
+      orderId: order._id,
+      userId: order.user,
+      customerEmail: order.customer_email
+    }); // Debug log
 
     // Update stock quantities
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const quantity = item.quantity;
-
-      // Update pizza base stock
-      await PizzaBase.findByIdAndUpdate(item.pizzaBase, {
-        $inc: { stockQuantity: -quantity }
-      });
-
-      // Update sauce stock
-      await Sauce.findByIdAndUpdate(item.sauce, {
-        $inc: { stockQuantity: -quantity }
-      });
-
-      // Update cheese stock
-      await Cheese.findByIdAndUpdate(item.cheese, {
-        $inc: { stockQuantity: -quantity }
-      });
-
-      // Update toppings stock
-      for (const toppingId of item.toppings) {
-        await Topping.findByIdAndUpdate(toppingId, {
-          $inc: { stockQuantity: -quantity }
-        });
-      }
-    }
-
-    // Add order to user's order history
-    await User.findByIdAndUpdate(req.user.id, {
-      $push: { orderHistory: order._id }
+    await PizzaBase.findByIdAndUpdate(pizza_base.id, {
+      $inc: { stockQuantity: -1 }
     });
+
+    await Sauce.findByIdAndUpdate(sauce.id, {
+      $inc: { stockQuantity: -1 }
+    });
+
+    await Cheese.findByIdAndUpdate(cheese.id, {
+      $inc: { stockQuantity: -1 }
+    });
+
+    for (const topping of toppings) {
+      await Topping.findByIdAndUpdate(topping.id, {
+        $inc: { stockQuantity: -1 }
+      });
+    }
 
     // Send order confirmation email
     const user = await User.findById(req.user.id);
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: user.email,
-      subject: `Order Confirmation - PizzaMaster (Order #${order.orderNumber})`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">Order Confirmation</h2>
-          <p>Hi ${user.firstName},</p>
-          <p>Thank you for your order! Your pizza is being prepared.</p>
-          
-          <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
-            <h3>Order Details</h3>
-            <p><strong>Order Number:</strong> ${order.orderNumber}</p>
-            <p><strong>Total Amount:</strong> $${order.totalAmount.toFixed(2)}</p>
-            <p><strong>Status:</strong> ${order.status}</p>
-            <p><strong>Estimated Delivery:</strong> ${order.estimatedDeliveryTime.toLocaleString()}</p>
+    try {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: customer_email || user.email,
+        subject: `Order Confirmation - PizzaMaster (Order #${order._id})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">Order Confirmation</h2>
+            <p>Hi ${customer_name || user.firstName},</p>
+            <p>Thank you for your order! Your pizza is being prepared.</p>
+            
+            <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
+              <h3>Order Details</h3>
+              <p><strong>Order ID:</strong> ${order._id}</p>
+              <p><strong>Total Amount:</strong> $${total_price.toFixed(2)}</p>
+              <p><strong>Status:</strong> ${order.status}</p>
+              <p><strong>Delivery Address:</strong> ${delivery_address}</p>
+            </div>
+
+            <p>You can track your order status in your dashboard.</p>
+            <p>Best regards,<br>PizzaMaster Team</p>
           </div>
+        `
+      };
 
-          <p>You can track your order status in your dashboard.</p>
-          <p>Best regards,<br>PizzaMaster Team</p>
-        </div>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
+      await transporter.sendMail(mailOptions);
+    } catch (emailError) {
+      console.error('Email error:', emailError);
+      // Continue even if email fails
+    }
 
     // Populate order for response
     const populatedOrder = await Order.findById(order._id).populate('user', 'firstName lastName email');
@@ -195,7 +184,8 @@ const createOrder = async (req, res) => {
     console.error('Create order error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error creating order'
+      error: 'Server error creating order',
+      details: error.message
     });
   }
 };
@@ -205,9 +195,14 @@ const createOrder = async (req, res) => {
 // @access  Private
 const getUserOrders = async (req, res) => {
   try {
+    console.log("getUserOrders called for user:", req.user.id); // Debug log
+    
     const orders = await Order.find({ user: req.user.id })
       .sort({ createdAt: -1 })
       .populate('user', 'firstName lastName email');
+
+    console.log("Found orders:", orders.length); // Debug log
+    console.log("Orders data:", orders); // Debug log
 
     res.status(200).json({
       success: true,

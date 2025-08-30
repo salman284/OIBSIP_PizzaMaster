@@ -54,7 +54,7 @@ export default function PizzaBuilder() {
           const currentUser = await User.me();
           setUser(currentUser);
           console.log("User loaded successfully:", currentUser);
-          if (currentUser.phone) setCustomerInfo(prev => ({ ...prev, phone: currentUser.phone }));
+          if (currentUser.phoneNumber) setCustomerInfo(prev => ({ ...prev, phone: currentUser.phoneNumber }));
           if (currentUser.address) setCustomerInfo(prev => ({ ...prev, address: currentUser.address }));
         } catch (userError) {
           console.log("User authentication error:", userError);
@@ -110,26 +110,55 @@ export default function PizzaBuilder() {
 
     setIsPlacingOrder(true);
     try {
+      // Calculate total price
+      const basePrice = selection.base.price || 0;
+      const saucePrice = selection.sauce.price || 0;
+      const cheesePrice = selection.cheese.price || 0;
+      const toppingsPrice = selection.toppings.reduce((sum, topping) => sum + (topping.price || 0), 0);
+      const totalPrice = basePrice + saucePrice + cheesePrice + toppingsPrice;
+
       const orderData = {
         customer_email: user.email,
-        customer_name: user.full_name,
+        customer_name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
         customer_phone: customerInfo.phone,
         delivery_address: customerInfo.address,
-        pizza_base: selection.base.name,
-        sauce: selection.sauce.name,
-        cheese: selection.cheese.name,
-        toppings: selection.toppings.map(t => t.name),
-        total_price: calculateTotal(),
-        special_instructions: customerInfo.instructions,
-        estimated_delivery: new Date(Date.now() + 45 * 60000).toISOString() // 45 minutes from now
+        pizza_base: {
+          id: selection.base._id,
+          name: selection.base.name,
+          price: selection.base.price
+        },
+        sauce: {
+          id: selection.sauce._id,
+          name: selection.sauce.name,
+          price: selection.sauce.price
+        },
+        cheese: {
+          id: selection.cheese._id,
+          name: selection.cheese.name,
+          price: selection.cheese.price
+        },
+        toppings: selection.toppings.map(topping => ({
+          id: topping._id,
+          name: topping.name,
+          price: topping.price
+        })),
+        total_price: totalPrice,
+        special_instructions: customerInfo.instructions || "",
+        payment_method: "cash"
       };
 
-      await Order.create(orderData);
+      console.log("Sending order data:", orderData); // Debug log
+      
+      const result = await Order.create(orderData);
+      console.log("Order created:", result); // Debug log
       
       // Update user info if changed
-      if (customerInfo.phone !== user.phone || customerInfo.address !== user.address) {
+      const currentPhone = user.phoneNumber || '';
+      const currentAddress = user.address || '';
+      
+      if (customerInfo.phone !== currentPhone || customerInfo.address !== currentAddress) {
         await User.updateMyUserData({
-          phone: customerInfo.phone,
+          phoneNumber: customerInfo.phone,
           address: customerInfo.address
         });
       }
@@ -139,6 +168,7 @@ export default function PizzaBuilder() {
       
     } catch (error) {
       console.error("Error placing order:", error);
+      console.error("Error details:", error.response?.data || error.message);
       alert("Error placing order. Please try again.");
     }
     setIsPlacingOrder(false);

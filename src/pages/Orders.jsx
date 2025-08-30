@@ -11,17 +11,31 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadOrders = async () => {
       try {
+        console.log("Starting to load orders..."); // Debug log
+        
+        // Check if user is authenticated
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Please log in to view your orders');
+          setIsLoading(false);
+          return;
+        }
+        
         const currentUser = await User.me();
+        console.log("Loading orders for user:", currentUser); // Debug log
         setUser(currentUser);
         
-        const userOrders = await Order.filter({ customer_email: currentUser.email }, "-created_date");
+        const userOrders = await Order.list();
+        console.log("Received orders:", userOrders); // Debug log
         setOrders(userOrders);
       } catch (error) {
         console.error("Error loading orders:", error);
+        setError(error.message);
       }
       setIsLoading(false);
     };
@@ -71,6 +85,26 @@ export default function Orders() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-xl mb-4">Error loading orders</div>
+          <div className="text-gray-600 mb-4">{error}</div>
+          {error.includes('log in') ? (
+            <Button onClick={() => window.location.href = '/login'} className="mt-4 bg-red-600 hover:bg-red-700">
+              Go to Login
+            </Button>
+          ) : (
+            <Button onClick={() => window.location.reload()} className="mt-4">
+              Retry
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
@@ -105,7 +139,7 @@ export default function Orders() {
           <div className="space-y-6">
             {orders.map((order, index) => (
               <motion.div
-                key={order.id}
+                key={order._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -115,10 +149,10 @@ export default function Orders() {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg font-bold text-gray-900">
-                          Order #{order.id?.slice(-6).toUpperCase()}
+                          Order #{order._id?.slice(-6).toUpperCase()}
                         </CardTitle>
                         <p className="text-sm text-gray-600">
-                          {new Date(order.created_date).toLocaleDateString()} at {new Date(order.created_date).toLocaleTimeString()}
+                          {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
                         </p>
                       </div>
                       <div className="text-right">
@@ -136,16 +170,16 @@ export default function Orders() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-3">Pizza Details</h3>
                         <div className="space-y-2 text-sm">
-                          <p><span className="font-medium">Base:</span> {order.pizza_base}</p>
-                          <p><span className="font-medium">Sauce:</span> {order.sauce}</p>
-                          <p><span className="font-medium">Cheese:</span> {order.cheese}</p>
+                          <p><span className="font-medium">Base:</span> {order.pizza_base?.name || 'N/A'}</p>
+                          <p><span className="font-medium">Sauce:</span> {order.sauce?.name || 'N/A'}</p>
+                          <p><span className="font-medium">Cheese:</span> {order.cheese?.name || 'N/A'}</p>
                           {order.toppings && order.toppings.length > 0 && (
                             <div>
                               <span className="font-medium">Toppings:</span>
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {order.toppings.map((topping, idx) => (
                                   <Badge key={idx} variant="outline" className="text-xs">
-                                    {topping}
+                                    {topping?.name || topping}
                                   </Badge>
                                 ))}
                               </div>
