@@ -23,10 +23,11 @@ const Profile = () => {
   const loadUserData = async () => {
     try {
       const userData = await UserEntity.me();
+      console.log('Loaded user data:', userData); // Debug log
       setUser(userData);
       setEditData({
-        name: userData.name || '',
-        phone: userData.phone || '',
+        name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        phone: userData.phoneNumber || '',
         address: userData.address || ''
       });
     } catch (error) {
@@ -60,18 +61,39 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      await UserEntity.updateMyUserData(editData);
-      setUser({ ...user, ...editData });
+      // Split the name into first and last name
+      const nameParts = editData.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      const updateData = {
+        firstName,
+        lastName,
+        phoneNumber: editData.phone,
+        address: editData.address
+      };
+      
+      console.log('Updating user with data:', updateData); // Debug log
+      const updatedUser = await UserEntity.updateMyUserData(updateData);
+      console.log('Updated user response:', updatedUser); // Debug log
+      
+      setUser(updatedUser);
+      setEditData({
+        name: `${updatedUser.firstName || ''} ${updatedUser.lastName || ''}`.trim(),
+        phone: updatedUser.phoneNumber || '',
+        address: updatedUser.address || ''
+      });
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating user data:', error);
+      alert('Failed to update profile. Please try again.');
     }
   };
 
   const handleCancel = () => {
     setEditData({
-      name: user.name || '',
-      phone: user.phone || '',
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      phone: user.phoneNumber || '',
       address: user.address || ''
     });
     setIsEditing(false);
@@ -199,7 +221,9 @@ const Profile = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 ) : (
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{user?.name || 'Not provided'}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">
+                    {`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Not provided'}
+                  </p>
                 )}
               </div>
 
@@ -221,7 +245,7 @@ const Profile = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 ) : (
-                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{user?.phone || 'Not provided'}</p>
+                  <p className="p-3 bg-gray-50 rounded-lg text-gray-800">{user?.phoneNumber || 'Not provided'}</p>
                 )}
               </div>
 
@@ -325,7 +349,7 @@ const Profile = () => {
               </h4>
               <div className="space-y-2 text-sm">
                 <p><span className="text-gray-600">Email:</span> <span className="font-medium">{user?.email || 'Not provided'}</span></p>
-                <p><span className="text-gray-600">Phone:</span> <span className="font-medium">{user?.phone || 'Not provided'}</span></p>
+                <p><span className="text-gray-600">Phone:</span> <span className="font-medium">{user?.phoneNumber || 'Not provided'}</span></p>
                 <p><span className="text-gray-600">Address:</span> <span className="font-medium">{user?.address || 'Not provided'}</span></p>
               </div>
             </div>

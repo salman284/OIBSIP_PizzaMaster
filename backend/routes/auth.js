@@ -282,7 +282,10 @@ const getMe = async (req, res) => {
           email: user.email,
           role: user.role,
           phoneNumber: user.phoneNumber,
-          isEmailVerified: user.isEmailVerified
+          address: user.address,
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
         }
       }
     });
@@ -300,7 +303,7 @@ const getMe = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, phoneNumber } = req.body;
+    const { firstName, lastName, phoneNumber, address } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -313,6 +316,7 @@ const updateProfile = async (req, res) => {
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
     user.phoneNumber = phoneNumber || user.phoneNumber;
+    user.address = address || user.address;
 
     await user.save();
 
@@ -327,7 +331,10 @@ const updateProfile = async (req, res) => {
           email: user.email,
           role: user.role,
           phoneNumber: user.phoneNumber,
-          isEmailVerified: user.isEmailVerified
+          address: user.address,
+          isEmailVerified: user.isEmailVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
         }
       }
     });

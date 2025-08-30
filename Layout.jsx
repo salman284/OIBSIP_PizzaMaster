@@ -143,12 +143,20 @@ export default function Layout({ children, currentPageName }) {
               <div className="space-y-4">
                 {/* User Info */}
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
+                  <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center shadow-lg">
+                    {/* Avatar with user initials */}
+                    {userData?.firstName || user?.firstName ? (
+                      <span className="text-white font-bold text-lg">
+                        {(userData?.firstName || user?.firstName || '').charAt(0).toUpperCase()}
+                        {(userData?.lastName || user?.lastName || '').charAt(0).toUpperCase()}
+                      </span>
+                    ) : (
+                      <Users className="w-6 h-6 text-white" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm truncate">
-                      {userData?.name || user?.name || 'User'}
+                      {`${userData?.firstName || user?.firstName || ''} ${userData?.lastName || user?.lastName || ''}`.trim() || 'User'}
                     </p>
                     <p className="text-xs text-orange-600 truncate capitalize">
                       {userData?.role || user?.role || 'Customer'}
