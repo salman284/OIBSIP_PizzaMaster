@@ -2,34 +2,100 @@
 <html>
 <head>
     <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 10px; padding: 10px 20px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        .loading { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
 </head>
 <body>
-    <h1>API Connection Test</h1>
-    <button onclick="testHealth()">Test Health Endpoint</button>
-    <button onclick="testLogin()">Test Login</button>
+    <h1>PizzaMaster API Connection Test</h1>
+    
+    <div>
+        <h3>API Endpoints Test:</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <button onclick="testPizzaBases()">Test Pizza Bases</button>
+        <button onclick="testSauces()">Test Sauces</button>
+        <button onclick="testRoot()">Test Root Endpoint</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div>
+        <h3>Authentication Test:</h3>
+        <button onclick="testLogin()">Test Login (Demo User)</button>
+        <button onclick="testRegister()">Test Register (New User)</button>
+    </div>
+
     <div id="results"></div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:5000/api';
+        const API_BASE_URL = 'http://localhost:5000';
         const resultsDiv = document.getElementById('results');
 
+        function showLoading(message) {
+            resultsDiv.innerHTML = `<p class="loading">${message}</p>`;
+        }
+
+        function showResult(title, data, isError = false) {
+            const className = isError ? 'error' : 'success';
+            resultsDiv.innerHTML = `<h3 class="${className}">${title}:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
         async function testHealth() {
+            showLoading('Testing health endpoint...');
             try {
-                console.log('Testing health endpoint...');
-                const response = await fetch(`${API_BASE_URL}/health`);
+                const response = await fetch(`${API_BASE_URL}/api/health`);
                 const data = await response.json();
-                resultsDiv.innerHTML = '<h3>Health Test Success:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                console.log('Health test success:', data);
+                showResult('Health Test Success', data);
             } catch (error) {
-                resultsDiv.innerHTML = '<h3>Health Test Error:</h3><pre>' + error.message + '</pre>';
-                console.error('Health test error:', error);
+                showResult('Health Test Error', { error: error.message }, true);
+            }
+        }
+
+        async function testRoot() {
+            showLoading('Testing root endpoint...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/`);
+                const data = await response.json();
+                showResult('Root Endpoint Success', data);
+            } catch (error) {
+                showResult('Root Endpoint Error', { error: error.message }, true);
+            }
+        }
+
+        async function testPizzaBases() {
+            showLoading('Testing pizza bases endpoint...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/pizza-bases`);
+                const data = await response.json();
+                showResult('Pizza Bases Test Success', data);
+            } catch (error) {
+                showResult('Pizza Bases Test Error', { error: error.message }, true);
+            }
+        }
+
+        async function testSauces() {
+            showLoading('Testing sauces endpoint...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/sauces`);
+                const data = await response.json();
+                showResult('Sauces Test Success', data);
+            } catch (error) {
+                showResult('Sauces Test Error', { error: error.message }, true);
             }
         }
 
         async function testLogin() {
+            showLoading('Testing login endpoint...');
             try {
-                console.log('Testing login endpoint...');
-                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -40,13 +106,55 @@
                     })
                 });
                 const data = await response.json();
-                resultsDiv.innerHTML = '<h3>Login Test Success:</h3><pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                console.log('Login test success:', data);
+                if (response.ok) {
+                    showResult('Login Test Success', data);
+                } else {
+                    showResult('Login Test Failed', data, true);
+                }
             } catch (error) {
-                resultsDiv.innerHTML = '<h3>Login Test Error:</h3><pre>' + error.message + '</pre>';
-                console.error('Login test error:', error);
+                showResult('Login Test Error', { error: error.message }, true);
             }
         }
+
+        async function testRegister() {
+            showLoading('Testing register endpoint...');
+            const testEmail = `test${Date.now()}@pizzamaster.com`;
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        firstName: 'Test',
+                        lastName: 'User',
+                        email: testEmail,
+                        password: 'password123',
+                        phoneNumber: '1234567890'
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    showResult('Register Test Success', data);
+                } else {
+                    showResult('Register Test Failed', data, true);
+                }
+            } catch (error) {
+                showResult('Register Test Error', { error: error.message }, true);
+            }
+        }
+
+        // Test on page load
+        window.onload = () => {
+            showResult('Page Loaded', { 
+                message: 'Ready to test API endpoints',
+                apiUrl: API_BASE_URL,
+                timestamp: new Date().toISOString()
+            });
+        };
+    </script>
+</body>
+</html>
 
         // Auto-test health on load
         window.onload = testHealth;

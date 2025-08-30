@@ -73,7 +73,7 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pizzamaster
   process.exit(1);
 });
 
-// Basic route
+// Basic routes
 app.get('/', (req, res) => {
   res.json({ 
     message: 'PizzaMaster API is running!',
@@ -91,6 +91,18 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV,
+    database: 'Connected'
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -100,15 +112,6 @@ app.use('/api/cheeses', cheeseRoutes);
 app.use('/api/toppings', toppingRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/inventory', inventoryRoutes);
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
-  });
-});
 
 // Error handling middleware (should be last)
 app.use(notFound);
