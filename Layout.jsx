@@ -61,6 +61,11 @@ export default function Layout({ children, currentPageName }) {
       url: createPageUrl("Orders"),
       icon: ShoppingCart,
     },
+    {
+      title: "Profile",
+      url: createPageUrl("Profile"),
+      icon: UserIcon,
+    },
   ];
 
   const adminNavigation = [
@@ -78,6 +83,11 @@ export default function Layout({ children, currentPageName }) {
       title: "Order Management",
       url: createPageUrl("OrderManagement"),
       icon: Settings,
+    },
+    {
+      title: "Profile",
+      url: createPageUrl("Profile"),
+      icon: UserIcon,
     },
   ];
 
@@ -143,7 +153,10 @@ export default function Layout({ children, currentPageName }) {
               <div className="space-y-4">
                 {/* User Info */}
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center shadow-lg">
+                  <Link 
+                    to={createPageUrl("Profile")} 
+                    className="w-12 h-12 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center shadow-lg hover:from-orange-500 hover:to-red-500 transition-all duration-200 cursor-pointer"
+                  >
                     {/* Avatar with user initials */}
                     {userData?.firstName || user?.firstName ? (
                       <span className="text-white font-bold text-lg">
@@ -153,7 +166,7 @@ export default function Layout({ children, currentPageName }) {
                     ) : (
                       <Users className="w-6 h-6 text-white" />
                     )}
-                  </div>
+                  </Link>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm truncate">
                       {`${userData?.firstName || user?.firstName || ''} ${userData?.lastName || user?.lastName || ''}`.trim() || 'User'}
@@ -164,18 +177,11 @@ export default function Layout({ children, currentPageName }) {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Link 
-                    to="/profile" 
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 text-sm font-medium"
-                  >
-                    <UserIcon className="w-4 h-4" />
-                    Profile
-                  </Link>
+                {/* Logout Button Only */}
+                <div className="flex justify-center">
                   <button 
                     onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 text-sm font-medium"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200 text-sm font-medium"
                   >
                     <LogOut className="w-4 h-4" />
                     Logout
