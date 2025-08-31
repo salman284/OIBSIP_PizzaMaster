@@ -29,21 +29,28 @@ export default function AdminDashboard() {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
+        console.log('🔄 Loading dashboard data...');
         const currentUser = await User.me();
+        console.log('✅ User loaded:', currentUser);
         setUser(currentUser);
 
-        if (currentUser.role !== 'admin') {
+        // Handle nested user data format
+        const userRole = currentUser?.role || currentUser?.user?.role;
+        if (userRole !== 'admin') {
           alert("Access denied. Admin privileges required.");
           return;
         }
 
+        console.log('🔄 Loading entities...');
         const [orders, bases, sauces, cheeses, toppings] = await Promise.all([
-          Order.list("-created_date", 20),
-          PizzaBase.list(),
-          Sauce.list(),
-          Cheese.list(),
-          Topping.list()
+          Order.listAll(20).catch(err => { console.error('❌ Orders failed:', err); return []; }),
+          PizzaBase.list().catch(err => { console.error('❌ PizzaBase failed:', err); return []; }),
+          Sauce.list().catch(err => { console.error('❌ Sauce failed:', err); return []; }),
+          Cheese.list().catch(err => { console.error('❌ Cheese failed:', err); return []; }),
+          Topping.list().catch(err => { console.error('❌ Topping failed:', err); return []; })
         ]);
+
+        console.log('📊 Data loaded:', { orders: orders.length, bases: bases.length, sauces: sauces.length, cheeses: cheeses.length, toppings: toppings.length });
 
         // Calculate stats
         const today = new Date().toDateString();
@@ -105,7 +112,13 @@ export default function AdminDashboard() {
     );
   }
 
-  if (user?.role !== 'admin') {
+  // Debug user data
+  console.log('🔍 User data for render check:', user);
+  console.log('🔍 User role:', user?.role);
+  const userRole = user?.role || user?.user?.role;
+  console.log('🔍 Computed user role:', userRole);
+
+  if (userRole !== 'admin') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-8 flex items-center justify-center">
         <Card className="max-w-md bg-white/80 backdrop-blur-sm shadow-xl border-0">
@@ -113,6 +126,7 @@ export default function AdminDashboard() {
             <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
             <p className="text-gray-600">You need admin privileges to access this page.</p>
+            <p className="text-sm text-gray-500 mt-2">Your role: {userRole || 'undefined'}</p>
           </CardContent>
         </Card>
       </div>
@@ -214,24 +228,31 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {data.orders.slice(0, 5).map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {order.pizza_base} • ${order.total_price?.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(order.created_date).toLocaleString()}
-                        </p>
+                  {data.orders && data.orders.length > 0 ? (
+                    data.orders.slice(0, 5).map((order) => (
+                      <div key={order.id || order._id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900">
+                            {order.customer_name || 'Unknown Customer'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {order.pizza_base?.name || order.pizza_base || 'Unknown Base'} • ${order.total_price?.toFixed(2) || '0.00'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {order.created_date ? new Date(order.created_date).toLocaleString() : 'Unknown Date'}
+                          </p>
+                        </div>
+                        <Badge className={`${statusColors[order.status] || 'bg-gray-100 text-gray-800'} border`}>
+                          {order.status ? order.status.replace('_', ' ') : 'Unknown'}
+                        </Badge>
                       </div>
-                      <Badge className={`${statusColors[order.status]} border`}>
-                        {order.status.replace('_', ' ')}
-                      </Badge>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500">No orders found</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>

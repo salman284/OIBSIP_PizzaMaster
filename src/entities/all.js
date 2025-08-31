@@ -52,7 +52,7 @@ const fetchPublic = async (url, options = {}) => {
 export class User {
   static async me() {
     try {
-      const data = await fetchWithAuth(`${API_BASE}/users/me`);
+      const data = await fetchWithAuth(`${API_BASE}/auth/me`);
       return data.data;
     } catch (error) {
       throw new Error('User not authenticated');
@@ -61,7 +61,7 @@ export class User {
 
   static async updateMyUserData(userData) {
     try {
-      const data = await fetchWithAuth(`${API_BASE}/users/me`, {
+      const data = await fetchWithAuth(`${API_BASE}/auth/profile`, {
         method: 'PUT',
         body: JSON.stringify(userData)
       });
@@ -206,12 +206,47 @@ export class Topping {
 
 // Order Entity
 export class Order {
-  static async list() {
+  static async list(sort = '', limit = null) {
     try {
-      const data = await fetchWithAuth(`${API_BASE}/orders`);
+      let url = `${API_BASE}/orders`;
+      const params = new URLSearchParams();
+      
+      if (sort) {
+        params.append('sort', sort);
+      }
+      if (limit) {
+        params.append('limit', limit);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const data = await fetchWithAuth(url);
       return data.data || data;
     } catch (error) {
       console.error('Failed to fetch orders:', error);
+      return [];
+    }
+  }
+
+  static async listAll(limit = null) {
+    try {
+      let url = `${API_BASE}/orders/admin/all`;
+      const params = new URLSearchParams();
+      
+      if (limit) {
+        params.append('limit', limit);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await fetchWithAuth(url);
+      return response.data || response;
+    } catch (error) {
+      console.error('Failed to fetch all orders:', error);
       return [];
     }
   }

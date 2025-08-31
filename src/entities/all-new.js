@@ -32,7 +32,7 @@ const fetchWithAuth = async (url, options = {}) => {
 export class User {
   static async me() {
     try {
-      const data = await fetchWithAuth(`${API_BASE}/users/me`);
+      const data = await fetchWithAuth(`${API_BASE}/auth/me`);
       return data.data;
     } catch (error) {
       throw new Error('User not authenticated');
@@ -41,7 +41,7 @@ export class User {
 
   static async updateMyUserData(userData) {
     try {
-      const data = await fetchWithAuth(`${API_BASE}/users/me`, {
+      const data = await fetchWithAuth(`${API_BASE}/auth/profile`, {
         method: 'PUT',
         body: JSON.stringify(userData)
       });
