@@ -32,6 +32,14 @@ export default function OrderManagement() {
         console.log('📦 Loading orders...');
         const allOrders = await Order.listAll();
         console.log('📋 Orders loaded:', allOrders?.length || 0, 'orders');
+        if (allOrders?.[0]) {
+          console.log('📄 Sample order fields:', Object.keys(allOrders[0]));
+          console.log('🗓️ Sample order dates:', {
+            created_date: allOrders[0].created_date,
+            createdAt: allOrders[0].createdAt,
+            estimated_delivery: allOrders[0].estimated_delivery
+          });
+        }
         setOrders(allOrders || []);
         setFilteredOrders(allOrders || []);
       } catch (error) {
@@ -224,7 +232,10 @@ export default function OrderManagement() {
                         </CardTitle>
                         <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                           <Clock className="w-4 h-4" />
-                          {order.created_date ? new Date(order.created_date).toLocaleString() : 'Date unknown'}
+                          {(order.created_date || order.createdAt) ? 
+                            new Date(order.created_date || order.createdAt).toLocaleString() : 
+                            'Date unknown'
+                          }
                         </p>
                       </div>
                       <div className="text-right">

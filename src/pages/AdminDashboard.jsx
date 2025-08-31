@@ -54,9 +54,10 @@ export default function AdminDashboard() {
 
         // Calculate stats
         const today = new Date().toDateString();
-        const todayOrders = orders.filter(order => 
-          new Date(order.created_date).toDateString() === today
-        );
+        const todayOrders = orders.filter(order => {
+          const orderDate = order.created_date || order.createdAt;
+          return orderDate && new Date(orderDate).toDateString() === today;
+        });
 
         const totalRevenue = orders.reduce((sum, order) => sum + (order.total_price || 0), 0);
 
@@ -239,7 +240,10 @@ export default function AdminDashboard() {
                             {order.pizza_base?.name || order.pizza_base || 'Unknown Base'} • ${order.total_price?.toFixed(2) || '0.00'}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {order.created_date ? new Date(order.created_date).toLocaleString() : 'Unknown Date'}
+                            {(order.created_date || order.createdAt) ? 
+                              new Date(order.created_date || order.createdAt).toLocaleString() : 
+                              'Unknown Date'
+                            }
                           </p>
                         </div>
                         <Badge className={`${statusColors[order.status] || 'bg-gray-100 text-gray-800'} border`}>
