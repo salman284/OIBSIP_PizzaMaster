@@ -128,21 +128,24 @@ export default function Layout({ children, currentPageName }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        className={`hover:bg-orange-100 hover:text-orange-800 transition-all duration-200 rounded-xl mb-2 ${
-                          location.pathname === item.url ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md' : ''
-                        }`}
-                      >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                  {navigationItems.map((item) => {
+                    const isActive = location.pathname === item.url;
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <Link 
+                          to={item.url} 
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md' 
+                              : 'text-gray-700 hover:bg-orange-100 hover:text-orange-800'
+                          }`}
+                        >
                           <item.icon className="w-5 h-5" />
                           <span className="font-medium">{item.title}</span>
                         </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
