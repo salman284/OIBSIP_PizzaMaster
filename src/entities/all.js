@@ -85,10 +85,18 @@ export class PizzaBase {
   }
 
   static async update(id, data) {
-    return await fetchWithAuth(`${API_BASE}/pizza-bases/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+    try {
+      console.log('🔄 PizzaBase.update called:', { id, data });
+      const response = await fetchWithAuth(`${API_BASE}/pizza-bases/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      console.log('✅ PizzaBase.update response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ PizzaBase.update error:', error);
+      throw error;
+    }
   }
 
   static async create(data) {
@@ -118,10 +126,18 @@ export class Sauce {
   }
 
   static async update(id, data) {
-    return await fetchWithAuth(`${API_BASE}/sauces/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+    try {
+      console.log('🔄 Sauce.update called:', { id, data });
+      const response = await fetchWithAuth(`${API_BASE}/sauces/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      console.log('✅ Sauce.update response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Sauce.update error:', error);
+      throw error;
+    }
   }
 
   static async create(data) {
@@ -151,10 +167,18 @@ export class Cheese {
   }
 
   static async update(id, data) {
-    return await fetchWithAuth(`${API_BASE}/cheeses/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+    try {
+      console.log('🔄 Cheese.update called:', { id, data });
+      const response = await fetchWithAuth(`${API_BASE}/cheeses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      console.log('✅ Cheese.update response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Cheese.update error:', error);
+      throw error;
+    }
   }
 
   static async create(data) {
@@ -184,10 +208,18 @@ export class Topping {
   }
 
   static async update(id, data) {
-    return await fetchWithAuth(`${API_BASE}/toppings/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+    try {
+      console.log('🔄 Topping.update called:', { id, data });
+      const response = await fetchWithAuth(`${API_BASE}/toppings/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      console.log('✅ Topping.update response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Topping.update error:', error);
+      throw error;
+    }
   }
 
   static async create(data) {
