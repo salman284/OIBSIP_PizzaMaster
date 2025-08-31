@@ -52,9 +52,16 @@ const fetchPublic = async (url, options = {}) => {
 export class User {
   static async me() {
     try {
-      const data = await fetchWithAuth(`${API_BASE}/auth/me`);
-      return data.data;
+      console.log('🔐 User.me called');
+      const response = await fetchWithAuth(`${API_BASE}/auth/me`);
+      console.log('👤 User.me raw response:', response);
+      
+      // Handle nested user object structure - the user data is in response.user
+      const userData = response.user || response.data?.user || response.data || response;
+      console.log('✅ User.me processed data:', userData);
+      return userData;
     } catch (error) {
+      console.error('❌ User.me error:', error);
       throw new Error('User not authenticated');
     }
   }
@@ -296,10 +303,23 @@ export class Order {
   }
 
   static async update(id, data) {
-    return await fetchWithAuth(`${API_BASE}/orders/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data)
-    });
+    try {
+      console.log('🔄 Order.update called:', { id, data });
+      
+      // Use the correct endpoint for status updates
+      const endpoint = data.status ? `${API_BASE}/orders/${id}/status` : `${API_BASE}/orders/${id}`;
+      console.log('🎯 Using endpoint:', endpoint);
+      
+      const response = await fetchWithAuth(endpoint, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      console.log('✅ Order.update response:', response);
+      return response;
+    } catch (error) {
+      console.error('❌ Order.update error:', error);
+      throw error;
+    }
   }
 
   static async delete(id) {

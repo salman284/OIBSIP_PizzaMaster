@@ -314,50 +314,57 @@ const updateOrderStatus = async (req, res) => {
     order.status = status;
 
     // Update estimated delivery time for certain statuses
-    if (status === 'preparing') {
-      order.estimatedDeliveryTime = new Date(Date.now() + 30 * 60000); // 30 minutes
+    if (status === 'in_kitchen') {
+      order.estimated_delivery = new Date(Date.now() + 30 * 60000); // 30 minutes
     } else if (status === 'out_for_delivery') {
-      order.estimatedDeliveryTime = new Date(Date.now() + 15 * 60000); // 15 minutes
+      order.estimated_delivery = new Date(Date.now() + 15 * 60000); // 15 minutes
     } else if (status === 'delivered') {
-      order.deliveredAt = new Date();
+      order.actual_delivery = new Date();
     }
 
     await order.save();
 
-    // Send status update email
-    const statusMessages = {
-      'confirmed': 'Your order has been confirmed and is being prepared.',
-      'preparing': 'Your pizza is now being prepared in our kitchen.',
-      'ready': 'Your order is ready for pickup/delivery.',
-      'out_for_delivery': 'Your order is out for delivery.',
-      'delivered': 'Your order has been delivered. Enjoy your meal!',
-      'cancelled': 'Your order has been cancelled.'
-    };
+    // Try to send status update email (don't fail if email fails)
+    try {
+      const statusMessages = {
+        'pending': 'Your order has been received and is being processed.',
+        'confirmed': 'Your order has been confirmed and is being prepared.',
+        'in_kitchen': 'Your pizza is now being prepared in our kitchen.',
+        'out_for_delivery': 'Your order is out for delivery.',
+        'delivered': 'Your order has been delivered. Enjoy your meal!',
+        'cancelled': 'Your order has been cancelled.'
+      };
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: order.user.email,
-      subject: `Order Update - PizzaMaster (Order #${order.orderNumber})`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #dc2626;">Order Status Update</h2>
-          <p>Hi ${order.user.firstName},</p>
-          <p>${statusMessages[status]}</p>
-          
-          <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
-            <h3>Order Details</h3>
-            <p><strong>Order Number:</strong> ${order.orderNumber}</p>
-            <p><strong>Status:</strong> ${order.status.replace('_', ' ').toUpperCase()}</p>
-            ${order.estimatedDeliveryTime ? `<p><strong>Estimated Delivery:</strong> ${order.estimatedDeliveryTime.toLocaleString()}</p>` : ''}
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: order.user.email,
+        subject: `Order Update - PizzaMaster (Order #${order.orderNumber})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #dc2626;">Order Status Update</h2>
+            <p>Hi ${order.user.firstName},</p>
+            <p>${statusMessages[status]}</p>
+            
+            <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
+              <h3>Order Details</h3>
+              <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+              <p><strong>Status:</strong> ${order.status.replace('_', ' ').toUpperCase()}</p>
+              ${order.estimated_delivery ? `<p><strong>Estimated Delivery:</strong> ${order.estimated_delivery.toLocaleString()}</p>` : ''}
+            </div>
+
+            <p>Thank you for choosing PizzaMaster!</p>
+            <p>Best regards,<br>PizzaMaster Team</p>
           </div>
+        `
+      };
 
-          <p>Thank you for choosing PizzaMaster!</p>
-          <p>Best regards,<br>PizzaMaster Team</p>
-        </div>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
+      if (transporter) {
+        await transporter.sendMail(mailOptions);
+      }
+    } catch (emailError) {
+      console.log('Email sending failed:', emailError.message);
+      // Continue without failing the status update
+    }
 
     res.status(200).json({
       success: true,

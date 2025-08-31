@@ -18,19 +18,25 @@ export default function OrderManagement() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
+        console.log('🔐 Loading user data for order management...');
         const currentUser = await User.me();
+        console.log('👤 User loaded:', currentUser);
         setUser(currentUser);
 
-        if (currentUser.role !== 'admin') {
+        if (currentUser?.role !== 'admin') {
+          console.log('❌ Access denied - user role:', currentUser?.role);
           alert("Access denied. Admin privileges required.");
           return;
         }
 
-        const allOrders = await Order.list("-created_date");
-        setOrders(allOrders);
-        setFilteredOrders(allOrders);
+        console.log('📦 Loading orders...');
+        const allOrders = await Order.listAll();
+        console.log('📋 Orders loaded:', allOrders?.length || 0, 'orders');
+        setOrders(allOrders || []);
+        setFilteredOrders(allOrders || []);
       } catch (error) {
-        console.error("Error loading orders:", error);
+        console.error("❌ Error loading orders:", error);
+        alert(`Error loading orders: ${error.message}`);
       }
       setIsLoading(false);
     };
@@ -50,17 +56,19 @@ export default function OrderManagement() {
     setUpdatingOrders(prev => ({ ...prev, [orderId]: true }));
     
     try {
+      console.log('🔄 Updating order status:', { orderId, newStatus });
       await Order.update(orderId, { status: newStatus });
+      console.log('✅ Order status updated successfully');
       
       // Update local state
       setOrders(prevOrders => 
         prevOrders.map(order =>
-          order.id === orderId ? { ...order, status: newStatus } : order
+          (order.id || order._id) === orderId ? { ...order, status: newStatus } : order
         )
       );
     } catch (error) {
-      console.error("Error updating order status:", error);
-      alert("Error updating order status. Please try again.");
+      console.error("❌ Error updating order status:", error);
+      alert(`Error updating order status: ${error.message}. Please try again.`);
     }
     
     setUpdatingOrders(prev => {
@@ -212,18 +220,18 @@ export default function OrderManagement() {
                     <div className="flex justify-between items-start">
                       <div>
                         <CardTitle className="text-lg font-bold text-gray-900">
-                          Order #{order.id?.slice(-6).toUpperCase()}
+                          Order #{(order.id || order._id)?.slice(-6)?.toUpperCase() || 'Unknown'}
                         </CardTitle>
                         <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                           <Clock className="w-4 h-4" />
-                          {new Date(order.created_date).toLocaleString()}
+                          {order.created_date ? new Date(order.created_date).toLocaleString() : 'Date unknown'}
                         </p>
                       </div>
                       <div className="text-right">
-                        <Badge className={`${statusColors[order.status]} border mb-2`}>
-                          {order.status.replace('_', ' ').toUpperCase()}
+                        <Badge className={`${statusColors[order.status] || statusColors.pending} border mb-2`}>
+                          {(order.status || 'pending').replace('_', ' ').toUpperCase()}
                         </Badge>
-                        <p className="text-2xl font-bold text-red-600">${order.total_price?.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-red-600">${(order.total_price || 0).toFixed(2)}</p>
                       </div>
                     </div>
                   </CardHeader>
@@ -234,14 +242,14 @@ export default function OrderManagement() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-3">Customer Details</h3>
                         <div className="space-y-2 text-sm">
-                          <p className="font-medium text-gray-900">{order.customer_name}</p>
+                          <p className="font-medium text-gray-900">{order.customer_name || 'Unknown Customer'}</p>
                           <p className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-red-500" />
-                            {order.customer_phone}
+                            {order.customer_phone || 'No phone provided'}
                           </p>
                           <p className="flex items-start gap-2">
                             <MapPin className="w-4 h-4 text-red-500 mt-0.5" />
-                            <span>{order.delivery_address}</span>
+                            <span>{order.delivery_address || 'No address provided'}</span>
                           </p>
                           {order.special_instructions && (
                             <p className="flex items-start gap-2">
@@ -256,16 +264,16 @@ export default function OrderManagement() {
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-3">Pizza Details</h3>
                         <div className="space-y-1 text-sm">
-                          <p><span className="font-medium">Base:</span> {order.pizza_base}</p>
-                          <p><span className="font-medium">Sauce:</span> {order.sauce}</p>
-                          <p><span className="font-medium">Cheese:</span> {order.cheese}</p>
-                          {order.toppings && order.toppings.length > 0 && (
+                          <p><span className="font-medium">Base:</span> {order.pizza_base?.name || order.pizza_base || 'Not specified'}</p>
+                          <p><span className="font-medium">Sauce:</span> {order.sauce?.name || order.sauce || 'Not specified'}</p>
+                          <p><span className="font-medium">Cheese:</span> {order.cheese?.name || order.cheese || 'Not specified'}</p>
+                          {order.toppings && Array.isArray(order.toppings) && order.toppings.length > 0 && (
                             <div>
                               <span className="font-medium">Toppings:</span>
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {order.toppings.map((topping, idx) => (
                                   <Badge key={idx} variant="outline" className="text-xs">
-                                    {topping}
+                                    {topping?.name || topping || 'Unknown topping'}
                                   </Badge>
                                 ))}
                               </div>
@@ -279,9 +287,9 @@ export default function OrderManagement() {
                         <h3 className="font-semibold text-gray-900 mb-3">Update Status</h3>
                         <div className="space-y-3">
                           <Select
-                            value={order.status}
-                            onValueChange={(newStatus) => updateOrderStatus(order.id, newStatus)}
-                            disabled={updatingOrders[order.id]}
+                            value={order.status || 'pending'}
+                            onValueChange={(newStatus) => updateOrderStatus(order.id || order._id, newStatus)}
+                            disabled={updatingOrders[order.id || order._id]}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -295,7 +303,7 @@ export default function OrderManagement() {
                             </SelectContent>
                           </Select>
                           
-                          {updatingOrders[order.id] && (
+                          {updatingOrders[order.id || order._id] && (
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
                               Updating status...
