@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "description": "PizzaMaster Backend API with MongoDB",
   "main": "server.js",
+  "license": "MIT",
+  "author": "Salman Alam Ostagar",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/salman284/OIBSIP_PizzaMaster.git"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

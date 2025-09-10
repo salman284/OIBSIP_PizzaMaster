@@ -1,3 +1,9 @@
+/**
+ * PizzaMaster - A Modern Pizza Ordering Application
+ * Copyright (c) 2025 Salman Alam Ostagar
+ * Licensed under the MIT License
+ */
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'

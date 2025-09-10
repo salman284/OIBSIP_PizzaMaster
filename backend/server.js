@@ -1,3 +1,9 @@
+/**
+ * PizzaMaster Backend Server
+ * Copyright (c) 2025 Salman Alam Ostagar
+ * Licensed under the MIT License
+ */
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
