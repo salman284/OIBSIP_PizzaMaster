@@ -48,7 +48,7 @@ export default function Dashboard() {
     {
       name: "Pepperoni Supreme",
       description: "Pepperoni, mozzarella, oregano",
-      image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop",
+      image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop&q=80",
       price: 15.99
     },
     {
