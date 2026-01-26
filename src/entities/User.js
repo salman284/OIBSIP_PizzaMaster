@@ -27,5 +27,4 @@ export class User {
       throw new Error('Failed to update user data');
     }
   }
-  }
 }
