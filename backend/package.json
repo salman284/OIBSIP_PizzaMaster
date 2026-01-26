@@ -5,6 +5,9 @@
   "main": "server.js",
   "license": "MIT",
   "author": "Salman Alam Ostagar",
+  "engines": {
+    "node": "18.x"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/salman284/OIBSIP_PizzaMaster.git"
