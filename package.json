@@ -6,13 +6,16 @@
   "license": "MIT",
   "author": "Salman Alam Ostagar",
   "description": "A modern, full-stack pizza ordering application built with React, Node.js, and MongoDB",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/salman284/OIBSIP_PizzaMaster.git"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
