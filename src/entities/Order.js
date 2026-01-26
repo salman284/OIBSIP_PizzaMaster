@@ -1,36 +1,18 @@
-// Local API Order Entity
-const API_BASE = "/api"; // Use proxy to backend
+// Import API configuration
+import { apiRequest } from '../services/api';
 
-// Helper function to get auth token
-const getAuthToken = () => {
-  return localStorage.getItem('token');
-};
-
-// Helper function for authenticated requests
-const fetchWithAuth = async (url, options = {}) => {
-  const token = getAuthToken();
-  return fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  });
+// Helper function for authenticated requests (deprecated - using apiRequest instead)
+const fetchWithAuth = async (endpoint, options = {}) => {
+  return await apiRequest(endpoint, options);
 };
 
 export class Order {
   static async list() {
     try {
-      const response = await fetchWithAuth(`${API_BASE}/orders`, {
+      const result = await apiRequest('/orders', {
         method: 'GET'
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
       console.log("Order.list response:", result); // Debug log
       
       // Handle the backend response format: { success: true, count: X, data: [...] }
@@ -48,16 +30,12 @@ export class Order {
 
   static async create(orderData) {
     try {
-      const response = await fetchWithAuth(`${API_BASE}/orders`, {
+      const result = await apiRequest('/orders', {
         method: 'POST',
-        body: JSON.stringify(orderData)
+        body: orderData
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
+      return result;
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -66,16 +44,12 @@ export class Order {
 
   static async update(id, data) {
     try {
-      const response = await fetchWithAuth(`${API_BASE}/orders/${id}`, {
+      const result = await apiRequest(`/orders/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data)
+        body: data
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
+      return result;
     } catch (error) {
       console.error('Error updating order:', error);
       throw error;
@@ -84,18 +58,42 @@ export class Order {
 
   static async getById(id) {
     try {
-      const response = await fetchWithAuth(`${API_BASE}/orders/${id}`, {
+      const result = await apiRequest(`/orders/${id}`, {
         method: 'GET'
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      return await response.json();
+      return result;
     } catch (error) {
       console.error('Error fetching order:', error);
       throw error;
+    }
+  }
+
+  static async filter(filters = {}, sort = '-created_date', limit = 10) {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+          queryParams.append(key, filters[key]);
+        }
+      });
+      
+      if (sort) queryParams.append('sort', sort);
+      if (limit) queryParams.append('limit', limit);
+      
+      const result = await apiRequest(`/orders?${queryParams.toString()}`, {
+        method: 'GET'
+      });
+      
+      if (result.success && result.data) {
+        return result.data;
+      }
+      
+      return result.orders || result || [];
+    } catch (error) {
+      console.error('Error filtering orders:', error);
+      return [];
     }
   }
 }
