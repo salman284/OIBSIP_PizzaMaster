@@ -63,6 +63,9 @@ const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
+// Export the apiRequest function for direct use
+export { apiRequest };
+
 // Authentication API
 export const authAPI = {
   register: (userData) => apiRequest('/auth/register', {
