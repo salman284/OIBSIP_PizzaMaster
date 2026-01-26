@@ -6,11 +6,6 @@ const fetchWithAuth = async (endpoint, options = {}) => {
   return await apiRequest(endpoint, options);
 };
 
-// Helper function for public requests (same as fetchWithAuth since apiRequest handles both)
-const fetchPublic = async (endpoint, options = {}) => {
-  return await apiRequest(endpoint, options);
-};
-
 // Helper function for public requests (no authentication required)
 const fetchPublic = async (url, options = {}) => {
   const headers = {
