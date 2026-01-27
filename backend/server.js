@@ -128,5 +128,10 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   console.log(`📱 Client URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-  console.log(`📊 API Documentation available at http://localhost:${PORT}/`);
+  
+  // Dynamic API documentation URL based on environment
+  const apiUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://pizzamaster-5tlx.onrender.com/' 
+    : `http://localhost:${PORT}/`;
+  console.log(`📊 API Documentation available at ${apiUrl}`);
 });
