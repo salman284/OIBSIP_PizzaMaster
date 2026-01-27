@@ -55,10 +55,18 @@ app.use('/api/', limiter);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'https://oibsip-pizza-master.vercel.app',
+  origin: [
+    process.env.CLIENT_URL || 'https://oibsip-pizza-master.vercel.app',
+    'https://oibsip-pizza-master.vercel.app',
+    'https://oibsip-pizza-master-*.vercel.app', // Vercel preview deployments
+    'http://localhost:5173', // Local development
+    'http://localhost:3000'  // Alternative local port
+  ],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Body parsing middleware
