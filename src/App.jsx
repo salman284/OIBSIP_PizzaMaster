@@ -7,7 +7,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
-import Layout from '../Layout'
+import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import PizzaBuilder from './pages/PizzaBuilder'
 import Orders from './pages/Orders'

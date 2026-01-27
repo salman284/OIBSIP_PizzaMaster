@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 
 const SidebarProvider = ({ children, className, ...props }) => (
   <div className={cn("flex min-h-screen", className)} {...props}>
