@@ -20,11 +20,17 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import ProtectedRoute from './components/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function App() {
+  console.log('🚀 PizzaMaster App starting...');
+  console.log('🌐 API URL:', import.meta.env.VITE_API_URL);
+  console.log('🏠 Host:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
+  
   return (
-    <AuthProvider>
-      <Router>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
@@ -107,6 +113,7 @@ function App() {
         />
       </Router>
     </AuthProvider>
+    </ErrorBoundary>
   )
 }
 

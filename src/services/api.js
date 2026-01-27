@@ -1,5 +1,9 @@
 // API base configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pizzamaster-5tlx.onrender.com/api';
+// Force production URL for deployed version
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+                     (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+                       ? 'https://pizzamaster-5tlx.onrender.com/api'
+                       : 'http://localhost:5000/api');
 
 // Helper function to get auth token
 const getAuthToken = () => {
