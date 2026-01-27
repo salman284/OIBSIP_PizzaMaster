@@ -1,13 +1,19 @@
 // Import API configuration
 import { apiRequest } from '../services/api';
 
+// API base configuration - same as in api.js
+const API_BASE_URL = process.env.NODE_ENV === 'production' || (typeof window !== 'undefined' && window.location.hostname !== 'localhost') 
+  ? 'https://pizzamaster-5tlx.onrender.com/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api');
+
 // Helper function for authenticated requests (deprecated - using apiRequest instead)
 const fetchWithAuth = async (endpoint, options = {}) => {
   return await apiRequest(endpoint, options);
 };
 
 // Helper function for public requests (no authentication required)
-const fetchPublic = async (url, options = {}) => {
+const fetchPublic = async (endpoint, options = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers
