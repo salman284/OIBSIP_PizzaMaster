@@ -243,10 +243,8 @@ export const AuthProvider = ({ children }) => {
     return state.user?.role === 'admin';
   };
 
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return state.isAuthenticated && state.user;
-  };
+  // Computed authentication status
+  const isAuthenticated = state.isAuthenticated && state.user;
 
   const value = {
     ...state,
@@ -257,7 +255,7 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     clearError,
     isAdmin,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated,
     loadUser,
   };
 

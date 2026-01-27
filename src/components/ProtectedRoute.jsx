@@ -21,11 +21,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   }
 
   // Check admin access for admin-only routes
-  if (adminOnly && !isAdmin()) {
+  const userIsAdmin = isAdmin();
+  if (adminOnly && !userIsAdmin) {
     console.log('Admin check failed:', {
       user: user,
       userRole: user?.role,
-      isAdmin: isAdmin(),
+      isAdmin: userIsAdmin,
       adminOnly: adminOnly,
       token: localStorage.getItem('token')?.substring(0, 20) + '...'
     });
