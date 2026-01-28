@@ -170,7 +170,7 @@ export default function Dashboard() {
                     <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                       <div>
                         <p className="font-medium text-gray-900">
-                          {order.pizza_base} with {order.sauce} sauce
+                          {order.pizza_base?.name || order.pizza_base || 'Pizza'} with {order.sauce?.name || order.sauce || 'Tomato'} sauce
                         </p>
                         <p className="text-sm text-gray-500">
                           {new Date(order.created_date).toLocaleDateString()} • ${order.total_price?.toFixed(2)}
