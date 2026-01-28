@@ -119,56 +119,44 @@ export default function Layout({ children, currentPageName }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton 
-                        asChild 
-                        className={`hover:bg-orange-100 hover:text-orange-800 transition-all duration-200 rounded-xl mb-2 ${
-                          location.pathname === item.url ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md' : ''
-                        }`}
-                      >
-                        <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
-                          <item.icon className="w-5 h-5" />
-                          <span className="font-medium">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                  
-                  {/* Logout Menu Item */}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton 
-                      asChild
-                      className="hover:bg-red-100 hover:text-red-800 transition-all duration-200 rounded-xl mb-2 text-red-600"
-                    >
-                      <button
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to logout?')) {
-                            logout();
-                          }
-                        }}
-                        className="flex items-center gap-3 px-4 py-3 w-full text-left"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Logout</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  {navigationItems.map((item) => {
+                    const isActive = location.pathname === item.url || 
+                                   (item.url === '/' && location.pathname === '/') ||
+                                   (item.url !== '/' && location.pathname.startsWith(item.url));
+                    
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton 
+                          asChild 
+                          className={`transition-all duration-200 rounded-xl mb-2 ${
+                            isActive 
+                              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md hover:from-red-600 hover:to-orange-600' 
+                              : 'hover:bg-orange-100 hover:text-orange-800'
+                          }`}
+                        >
+                          <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                            <item.icon className="w-5 h-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="border-t border-orange-200 p-6 space-y-4">
+          <SidebarFooter className="border-t border-orange-200 p-4">
             {user && (
-              <>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {user.full_name?.charAt(0).toUpperCase() || 'JD'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{user.full_name}</p>
-                    <p className="text-xs text-orange-600 truncate capitalize">{user.role}</p>
+                    <p className="font-semibold text-gray-900 text-sm truncate">{user.full_name || 'John Doe'}</p>
+                    <p className="text-xs text-gray-500 truncate capitalize">{user.role || 'User'}</p>
                   </div>
                 </div>
                 
@@ -178,12 +166,12 @@ export default function Layout({ children, currentPageName }) {
                       logout();
                     }
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all duration-200 font-medium"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-white bg-gray-600 hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium text-sm"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
                   <span>Logout</span>
                 </button>
-              </>
+              </div>
             )}
           </SidebarFooter>
         </Sidebar>
