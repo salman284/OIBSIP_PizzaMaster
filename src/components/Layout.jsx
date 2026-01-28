@@ -36,6 +36,14 @@ export default function Layout({ children, currentPageName }) {
     loadUser();
   }, []);
 
+  // Helper function to check if a route is active
+  const isRouteActive = (itemUrl) => {
+    if (itemUrl === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname === itemUrl || location.pathname.startsWith(itemUrl + '/');
+  };
+
   const customerNavigation = [
     {
       title: "Dashboard",
@@ -120,25 +128,21 @@ export default function Layout({ children, currentPageName }) {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navigationItems.map((item) => {
-                    const isActive = location.pathname === item.url || 
-                                   (item.url === '/' && location.pathname === '/') ||
-                                   (item.url !== '/' && location.pathname.startsWith(item.url));
+                    const isActive = isRouteActive(item.url);
                     
                     return (
                       <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton 
-                          asChild 
-                          className={`transition-all duration-200 rounded-xl mb-2 ${
+                        <Link 
+                          to={item.url} 
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all duration-200 ${
                             isActive 
-                              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md hover:from-red-600 hover:to-orange-600' 
-                              : 'hover:bg-orange-100 hover:text-orange-800'
+                              ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md' 
+                              : 'text-gray-700 hover:bg-orange-100 hover:text-orange-800'
                           }`}
                         >
-                          <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
-                            <item.icon className="w-5 h-5" />
-                            <span className="font-medium">{item.title}</span>
-                          </Link>
-                        </SidebarMenuButton>
+                          <item.icon className="w-5 h-5" />
+                          <span className="font-medium">{item.title}</span>
+                        </Link>
                       </SidebarMenuItem>
                     );
                   })}
