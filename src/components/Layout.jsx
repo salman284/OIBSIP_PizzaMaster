@@ -156,10 +156,10 @@ export default function Layout({ children, currentPageName }) {
               <div className="space-y-3">
                 <Link to={createPageUrl("Profile")} className="flex items-center gap-3 px-2 hover:bg-orange-50 rounded-lg py-2 transition-all duration-200 cursor-pointer">
                   <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                    {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U'}
+                    {user.fullName ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : (user.firstName && user.lastName ? (user.firstName[0] + user.lastName[0]).toUpperCase() : 'U')}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{user.full_name || 'User'}</p>
+                    <p className="font-semibold text-gray-900 text-sm truncate">{user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'}</p>
                     <p className="text-xs text-gray-500 truncate capitalize">{user.role || 'User'}</p>
                   </div>
                 </Link>

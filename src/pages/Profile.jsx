@@ -44,7 +44,7 @@ const Profile = () => {
       
       // Calculate statistics
       const totalOrders = orderData.length;
-      const totalSpent = orderData.reduce((sum, order) => sum + (order.totalPrice || 0), 0);
+      const totalSpent = orderData.reduce((sum, order) => sum + (order.total_price || 0), 0);
       
       setStatistics({
         totalOrders,
@@ -412,7 +412,7 @@ const Profile = () => {
                   
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-orange-600">
-                      ${order.totalPrice?.toFixed(2) || '0.00'}
+                      ${order.total_price?.toFixed(2) || '0.00'}
                     </span>
                   </div>
                 </div>
