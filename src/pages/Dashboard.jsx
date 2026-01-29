@@ -173,7 +173,7 @@ export default function Dashboard() {
                           {order.pizza_base?.name || order.pizza_base || 'Pizza'} with {order.sauce?.name || order.sauce || 'Tomato'} sauce
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(order.created_date).toLocaleDateString()} • ${order.total_price?.toFixed(2)}
+                          {new Date(order.createdAt).toLocaleDateString()} • ${order.total_price?.toFixed(2)}
                         </p>
                       </div>
                       <Badge className={`${statusColors[order.status]} border`}>

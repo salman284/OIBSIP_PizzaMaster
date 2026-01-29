@@ -281,11 +281,11 @@ export default function PizzaBuilder() {
                             selection.base?.id === base.id ? 'text-red-600' : 'text-red-500'
                           }`}>${base.price.toFixed(2)}</span>
                           <Badge variant="outline" className={`${
-                            base.stockQuantity < 10 
+                            base.stock < 10 
                               ? 'border-red-500 text-red-700 bg-red-50' 
                               : 'border-green-500 text-green-700 bg-green-50'
                           } font-medium`}>
-                            {base.stockQuantity} left
+                            {base.stock} left
                           </Badge>
                         </div>
                       </motion.div>
@@ -363,11 +363,11 @@ export default function PizzaBuilder() {
                             selection.sauce?._id === sauce._id ? 'text-red-600' : 'text-red-500'
                           }`}>${sauce.price.toFixed(2)}</span>
                           <Badge variant="outline" className={`${
-                            sauce.stockQuantity < 10 
+                            sauce.stock < 10 
                               ? 'border-red-500 text-red-700 bg-red-50' 
                               : 'border-green-500 text-green-700 bg-green-50'
                           } font-medium`}>
-                            {sauce.stockQuantity} left
+                            {sauce.stock} left
                           </Badge>
                         </div>
                       </motion.div>
@@ -445,11 +445,11 @@ export default function PizzaBuilder() {
                             selection.cheese?._id === cheese._id ? 'text-red-600' : 'text-red-500'
                           }`}>${cheese.price.toFixed(2)}</span>
                           <Badge variant="outline" className={`${
-                            cheese.stockQuantity < 10 
+                            cheese.stock < 10 
                               ? 'border-red-500 text-red-700 bg-red-50' 
                               : 'border-green-500 text-green-700 bg-green-50'
                           } font-medium`}>
-                            {cheese.stockQuantity} left
+                            {cheese.stock} left
                           </Badge>
                         </div>
                       </motion.div>
@@ -531,11 +531,11 @@ export default function PizzaBuilder() {
                           }`}>${topping.price.toFixed(2)}</span>
                         </div>
                         <Badge variant="outline" className={`text-xs mt-1 w-full justify-center ${
-                          topping.stockQuantity < 10 
+                          topping.stock < 10 
                             ? 'border-red-500 text-red-700 bg-red-50' 
                             : 'border-green-500 text-green-700 bg-green-50'
                         }`}>
-                          {topping.stockQuantity} left
+                          {topping.stock} left
                         </Badge>
                       </motion.div>
                     ))}
