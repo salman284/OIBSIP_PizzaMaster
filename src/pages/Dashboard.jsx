@@ -20,7 +20,8 @@ export default function Dashboard() {
         const currentUser = await User.me();
         setUser(currentUser);
         
-        const orders = await Order.filter({ customer_email: currentUser.email }, "-created_date", 5);
+        // Get only the 3 most recent orders
+        const orders = await Order.filter({ customer_email: currentUser.email }, "-created_date", 3);
         setRecentOrders(orders);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
@@ -74,24 +75,24 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12 text-center"
+          className="mb-8 md:mb-12 text-center px-2"
         >
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
-            Welcome to <span className="text-red-600">PizzaMaster</span>
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 mb-3 md:mb-4">
+            Welcome, <span className="text-red-600">Pizza Lover!</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 md:mb-8 max-w-2xl mx-auto px-4">
             Craft your perfect pizza with our premium ingredients and artisan techniques
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to={createPageUrl("PizzaBuilder")}>
-              <Button size="lg" className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-lg px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300">
-                <Pizza className="w-6 h-6 mr-2" />
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
+            <Link to={createPageUrl("PizzaBuilder")} className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-base md:text-lg px-6 md:px-8 py-3 md:py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300">
+                <Pizza className="w-5 h-5 md:w-6 md:h-6 mr-2" />
                 Build Your Pizza
               </Button>
             </Link>
-            <Link to={createPageUrl("Orders")}>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-4 rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50">
-                <ShoppingCart className="w-6 h-6 mr-2" />
+            <Link to={createPageUrl("Orders")} className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto text-base md:text-lg px-6 md:px-8 py-3 md:py-4 rounded-full border-2 border-red-600 text-red-600 hover:bg-red-50">
+                <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 mr-2" />
                 View Orders
               </Button>
             </Link>
@@ -103,10 +104,10 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-12"
+          className="mb-8 md:mb-12"
         >
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Featured Pizzas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 md:mb-8 text-center">Featured Pizzas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {featuredPizzas.map((pizza, index) => (
               <motion.div
                 key={pizza.name}

@@ -1,17 +1,56 @@
 import * as React from "react"
 import { cn } from "../../lib/utils"
+import { Menu } from "lucide-react"
 
-const SidebarProvider = ({ children, className, ...props }) => (
-  <div className={cn("flex min-h-screen", className)} {...props}>
-    {children}
-  </div>
-)
+const SidebarContext = React.createContext({
+  isOpen: false,
+  setIsOpen: () => {},
+})
 
-const Sidebar = ({ children, className, ...props }) => (
-  <div className={cn("w-64 bg-white border-r border-gray-200", className)} {...props}>
-    {children}
-  </div>
-)
+const SidebarProvider = ({ children, className, ...props }) => {
+  const [isOpen, setIsOpen] = React.useState(false)
+  
+  return (
+    <SidebarContext.Provider value={{ isOpen, setIsOpen }}>
+      <div className={cn("flex min-h-screen", className)} {...props}>
+        {children}
+      </div>
+    </SidebarContext.Provider>
+  )
+}
+
+const Sidebar = ({ children, className, ...props }) => {
+  const { isOpen, setIsOpen } = React.useContext(SidebarContext)
+  
+  return (
+    <>
+      {/* Desktop Sidebar - Fixed */}
+      <div className={cn("hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 w-64 bg-white border-r border-gray-200 z-30", className)} {...props}>
+        {children}
+      </div>
+      
+      {/* Mobile Sidebar Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Sidebar Drawer */}
+      <div 
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          className
+        )} 
+        {...props}
+      >
+        {children}
+      </div>
+    </>
+  )
+}
 
 const SidebarHeader = ({ children, className, ...props }) => (
   <div className={cn("p-4 border-b border-gray-200", className)} {...props}>
@@ -73,11 +112,19 @@ const SidebarMenuButton = React.forwardRef(({ children, className, asChild, ...p
 })
 SidebarMenuButton.displayName = "SidebarMenuButton"
 
-const SidebarTrigger = ({ children, className, ...props }) => (
-  <button className={cn("p-2 hover:bg-gray-100 rounded", className)} {...props}>
-    {children}
-  </button>
-)
+const SidebarTrigger = ({ children, className, ...props }) => {
+  const { isOpen, setIsOpen } = React.useContext(SidebarContext)
+  
+  return (
+    <button 
+      className={cn("p-2 hover:bg-gray-100 rounded", className)} 
+      onClick={() => setIsOpen(!isOpen)}
+      {...props}
+    >
+      {children || <Menu className="w-6 h-6" />}
+    </button>
+  )
+}
 
 export {
   SidebarProvider,
