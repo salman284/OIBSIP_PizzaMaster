@@ -15,7 +15,7 @@ if (process.env.EMAIL_USER &&
     process.env.EMAIL_PASS && 
     process.env.EMAIL_PASS !== 'your_app_password') {
   try {
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
