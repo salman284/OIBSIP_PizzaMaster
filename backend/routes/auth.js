@@ -10,7 +10,9 @@ const router = express.Router();
 
 // Email transporter setup (only create if email credentials are configured)
 let transporter = null;
-if (process.env.EMAIL_USER && 
+console.log('EMAIL_USER present:', !!process.env.EMAIL_USER, '| value:', process.env.EMAIL_USER);
+console.log('EMAIL_PASS present:', !!process.env.EMAIL_PASS);
+if (process.env.EMAIL_USER &&
     process.env.EMAIL_USER !== 'your_email@gmail.com' && 
     process.env.EMAIL_PASS && 
     process.env.EMAIL_PASS !== 'your_app_password') {
