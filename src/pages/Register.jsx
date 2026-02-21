@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -18,9 +18,9 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [registered, setRegistered] = useState(false);
   
   const { register, isLoading, error, clearError } = useAuth();
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,16 +62,51 @@ const Register = () => {
     try {
       const { confirmPassword, ...registerData } = formData;
       await register(registerData);
-      
-      // Registration successful - show message and redirect to login
-      alert('Registration successful! Please check your email to verify your account before logging in.');
-      navigate('/login');
+
+      // Show success state - user must verify email before logging in
+      setRegistered(true);
     } catch (error) {
       console.error('Registration failed:', error);
     }
   };
 
   const displayError = localError || error;
+
+  if (registered) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 px-4">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="mx-auto h-20 w-20 bg-gradient-to-br from-red-500 to-orange-600 rounded-full flex items-center justify-center shadow-2xl">
+              <span className="text-white text-4xl">🍕</span>
+            </div>
+          </div>
+          <Card className="p-8 shadow-2xl border-0 backdrop-blur-sm bg-white/80 rounded-2xl">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-9 h-9 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Check your email</h2>
+              <p className="text-gray-500 text-center">
+                We sent a verification link to{' '}
+                <span className="font-semibold text-gray-700">{formData.email}</span>.
+              </p>
+              <p className="text-gray-500 text-center text-sm">
+                Click the link in the email to verify your account. The link expires in 24 hours.
+              </p>
+              <Link to="/login" className="w-full mt-2">
+                <Button className="w-full h-12 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg border-0">
+                  Go to Login
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

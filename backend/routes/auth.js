@@ -22,6 +22,14 @@ if (process.env.EMAIL_USER &&
         pass: process.env.EMAIL_PASS
       }
     });
+    transporter.verify((error) => {
+      if (error) {
+        console.error('Email transporter verification failed:', error.message);
+        transporter = null;
+      } else {
+        console.log('Email transporter ready');
+      }
+    });
   } catch (error) {
     console.warn('Email transporter setup failed:', error.message);
   }
