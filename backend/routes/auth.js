@@ -2,40 +2,24 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const rateLimit = require('express-rate-limit');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { sendEmail } = require('../utils/sendEmail');
 
 const router = express.Router();
 
-// Email transporter setup (only create if email credentials are configured)
-let transporter = null;
-console.log('EMAIL_USER present:', !!process.env.EMAIL_USER, '| value:', process.env.EMAIL_USER);
-console.log('EMAIL_PASS present:', !!process.env.EMAIL_PASS);
-if (process.env.EMAIL_USER &&
-    process.env.EMAIL_USER !== 'your_email@gmail.com' && 
-    process.env.EMAIL_PASS && 
-    process.env.EMAIL_PASS !== 'your_app_password') {
-  try {
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-    transporter.verify((error) => {
-      if (error) {
-        console.error('Email transporter verification failed:', error.message);
-        transporter = null;
-      } else {
-        console.log('Email transporter ready');
-      }
-    });
-  } catch (error) {
-    console.warn('Email transporter setup failed:', error.message);
-  }
-}
+// Rate limiter for resend verification endpoint (3 requests per 15 min per IP)
+const resendLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  message: {
+    success: false,
+    error: 'Too many verification email requests from this IP. Please try again after 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -51,8 +35,17 @@ const register = async (req, res) => {
   try {
     const { firstName, lastName, email, password, phoneNumber } = req.body;
 
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide all required fields'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -60,69 +53,57 @@ const register = async (req, res) => {
       });
     }
 
-    // Generate email verification token
-    const emailVerificationToken = crypto.randomBytes(20).toString('hex');
+    // Generate raw verification token (32 bytes)
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    // Store only SHA-256 hash in DB
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
     const emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
-    // Create user
+    // Create user unverified
     const user = await User.create({
       firstName,
       lastName,
-      email,
+      email: normalizedEmail,
       password,
       phoneNumber,
-      emailVerificationToken,
-      emailVerificationExpire
+      isEmailVerified: false,
+      emailVerificationToken: hashedToken,
+      emailVerificationExpire,
+      lastVerificationEmailSent: new Date()
     });
 
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL;
+    const verificationUrl = `${frontendUrl}/verify-email/${rawToken}`;
+
+    const mailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #dc2626;">Welcome to PizzaMaster!</h2>
+        <p>Hi ${firstName},</p>
+        <p>Thank you for registering with PizzaMaster. Please verify your email address by clicking the button below:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" 
+             style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+            Verify Email
+          </a>
+        </div>
+        <p>This link will expire in 24 hours.</p>
+        <p>If you didn't create an account, please ignore this email.</p>
+        <p>Best regards,<br>The PizzaMaster Team</p>
+      </div>
+    `;
+
     let emailSent = false;
-
-    // Send verification email only if transporter is available
-    if (transporter) {
-      try {
-        const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${emailVerificationToken}`;
-        
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: 'Verify Your Email - PizzaMaster',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #dc2626;">Welcome to PizzaMaster!</h2>
-              <p>Hi ${firstName},</p>
-              <p>Thank you for registering with PizzaMaster. Please verify your email address by clicking the button below:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${verificationUrl}" 
-                   style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                  Verify Email
-                </a>
-              </div>
-              <p>This link will expire in 24 hours.</p>
-              <p>If you didn't create an account, please ignore this email.</p>
-              <p>Best regards,<br>PizzaMaster Team</p>
-            </div>
-          `
-        };
-
-        await transporter.sendMail(mailOptions);
-        emailSent = true;
-      } catch (emailError) {
-        console.error('Email sending failed:', emailError);
-        // Continue with registration even if email fails
-      }
-    }
-
-    // In development, auto-verify email if email service is not configured
-    if (!emailSent && process.env.NODE_ENV === 'development') {
-      user.isEmailVerified = true;
-      user.emailVerificationToken = undefined;
-      user.emailVerificationExpire = undefined;
-      await user.save();
+    try {
+      await sendEmail(user.email, 'Verify Your Email - PizzaMaster', mailHtml);
+      emailSent = true;
+    } catch (emailError) {
+      console.error('Registration email failed to send:', emailError.message);
+      // User remains unverified; never auto-verify on send failure
     }
 
     const message = emailSent 
       ? 'User registered successfully. Please check your email to verify your account.'
-      : 'User registered successfully. Email verification is disabled in development mode.';
+      : 'Account created, but we could not send the verification email. Please use "Resend verification email" on the login page.';
 
     res.status(201).json({
       success: true,
@@ -134,12 +115,12 @@ const register = async (req, res) => {
           lastName: user.lastName,
           email: user.email,
           role: user.role,
-          isEmailVerified: user.isEmailVerified
+          isEmailVerified: false
         }
       }
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Server error during registration'
@@ -154,15 +135,31 @@ const verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
 
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'No verification token provided'
+      });
+    }
+
+    // Hash the incoming token to match what's stored in the database
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
     const user = await User.findOne({
-      emailVerificationToken: token,
-      emailVerificationExpire: { $gt: Date.now() }
-    });
+      emailVerificationToken: hashedToken
+    }).select('+emailVerificationToken +emailVerificationExpire');
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid or expired verification token'
+        error: 'Invalid or already used verification token'
+      });
+    }
+
+    if (user.emailVerificationExpire && user.emailVerificationExpire < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Verification token has expired. Please request a new verification email.'
       });
     }
 
@@ -173,10 +170,10 @@ const verifyEmail = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Email verified successfully'
+      message: 'Email verified successfully! You can now log in.'
     });
   } catch (error) {
-    console.error('Email verification error:', error);
+    console.error('Email verification error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Server error during email verification'
@@ -199,8 +196,10 @@ const login = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if user exists and include password in the result
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -216,7 +215,7 @@ const login = async (req, res) => {
       });
     }
 
-    // Check password
+    // Check password FIRST so unverified status is never revealed to an attacker
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       // Increment failed login attempts
@@ -235,11 +234,12 @@ const login = async (req, res) => {
       });
     }
 
-    // Check if email is verified
+    // Check if email is verified AFTER password verification
     if (!user.isEmailVerified) {
-      return res.status(401).json({
+      return res.status(403).json({
         success: false,
-        error: 'Please verify your email before logging in'
+        code: 'EMAIL_NOT_VERIFIED',
+        error: 'Please verify your email before logging in.'
       });
     }
 
@@ -267,7 +267,7 @@ const login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Server error during login'
@@ -405,60 +405,61 @@ const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
+    if (!email) {
+      return res.status(400).json({
         success: false,
-        error: 'User not found with this email'
+        error: 'Please provide an email address'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists with that email, a password reset link has been sent.'
       });
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString('hex');
     user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     user.passwordResetExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     await user.save();
 
-    // Send reset email only if transporter is available
-    if (transporter) {
-      try {
-        const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
-        
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: email,
-          subject: 'Password Reset - PizzaMaster',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #dc2626;">Password Reset Request</h2>
-              <p>Hi ${user.firstName},</p>
-              <p>You requested a password reset for your PizzaMaster account. Click the button below to reset your password:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" 
-                   style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                  Reset Password
-                </a>
-              </div>
-              <p>This link will expire in 10 minutes.</p>
-              <p>If you didn't request this reset, please ignore this email.</p>
-              <p>Best regards,<br>PizzaMaster Team</p>
-            </div>
-          `
-        };
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL;
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
-        await transporter.sendMail(mailOptions);
-      } catch (emailError) {
-        console.error('Password reset email failed:', emailError);
-      }
+    const mailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #dc2626;">Password Reset Request</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>You requested a password reset for your PizzaMaster account. Click the button below to reset your password:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}" 
+             style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+            Reset Password
+          </a>
+        </div>
+        <p>This link will expire in 10 minutes.</p>
+        <p>If you didn't request this reset, please ignore this email.</p>
+        <p>Best regards,<br>The PizzaMaster Team</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail(user.email, 'Password Reset - PizzaMaster', mailHtml);
+    } catch (emailError) {
+      console.error('Password reset email failed to send:', emailError.message);
     }
 
     res.status(200).json({
       success: true,
-      message: 'Password reset email sent (if email service is configured)'
+      message: 'If an account exists with that email, a password reset link has been sent.'
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('Forgot password error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Server error during password reset request'
@@ -506,7 +507,7 @@ const resetPassword = async (req, res) => {
       message: 'Password reset successful'
     });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('Reset password error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Server error during password reset'
@@ -514,9 +515,90 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// @desc    Resend verification email
+// @route   POST /api/auth/resend-verification
+// @access  Public
+const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide your email address'
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Constant generic response to prevent account enumeration
+    const genericResponse = {
+      success: true,
+      message: 'If an account exists and is unverified, a new link has been sent.'
+    };
+
+    const user = await User.findOne({ email: normalizedEmail })
+      .select('+emailVerificationToken +emailVerificationExpire +lastVerificationEmailSent');
+
+    // Only send if user exists and is unverified
+    if (!user || user.isEmailVerified) {
+      return res.status(200).json(genericResponse);
+    }
+
+    // Per-account cooldown of 60 seconds
+    const COOLDOWN_MS = 60 * 1000;
+    if (user.lastVerificationEmailSent && (Date.now() - user.lastVerificationEmailSent.getTime() < COOLDOWN_MS)) {
+      return res.status(200).json(genericResponse);
+    }
+
+    // Generate new raw token and store hash
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    user.emailVerificationToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+    user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000;
+    user.lastVerificationEmailSent = new Date();
+    await user.save();
+
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL;
+    const verificationUrl = `${frontendUrl}/verify-email/${rawToken}`;
+
+    const mailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #dc2626;">Email Verification</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>You requested a new verification link for your PizzaMaster account. Please click the button below to verify your email:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${verificationUrl}" 
+             style="background-color: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+            Verify Email
+          </a>
+        </div>
+        <p>This link will expire in 24 hours.</p>
+        <p>If you didn't request this email, you can safely ignore it.</p>
+        <p>Best regards,<br>The PizzaMaster Team</p>
+      </div>
+    `;
+
+    try {
+      await sendEmail(user.email, 'Verify Your Email - PizzaMaster', mailHtml);
+    } catch (emailError) {
+      console.error('Resend verification email failed to send:', emailError.message);
+      // User remains unverified; never auto-verify
+    }
+
+    return res.status(200).json(genericResponse);
+  } catch (error) {
+    console.error('Resend verification error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Server error during resend verification'
+    });
+  }
+};
+
 // Routes
 router.post('/register', register);
 router.get('/verify-email/:token', verifyEmail);
+router.post('/resend-verification', resendLimiter, resendVerification);
 router.post('/login', login);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);

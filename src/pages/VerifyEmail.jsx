@@ -7,7 +7,7 @@ import { Button } from '../components/ui/button';
 
 const VerifyEmail = () => {
   const { token } = useParams();
-  const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
+  const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'expired' | 'invalid' | 'error'
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -18,19 +18,29 @@ const VerifyEmail = () => {
           setStatus('success');
           setMessage(response.message || 'Email verified successfully.');
         } else {
-          setStatus('error');
-          setMessage(response.error || 'Verification failed.');
+          classifyError(response.error || 'Verification failed.');
         }
       } catch (err) {
+        classifyError(err.message || 'Invalid or expired verification link.');
+      }
+    };
+
+    const classifyError = (errorMsg) => {
+      setMessage(errorMsg);
+      const lower = errorMsg.toLowerCase();
+      if (lower.includes('expired')) {
+        setStatus('expired');
+      } else if (lower.includes('invalid') || lower.includes('already used')) {
+        setStatus('invalid');
+      } else {
         setStatus('error');
-        setMessage(err.message || 'Invalid or expired verification link.');
       }
     };
 
     if (token) {
       verify();
     } else {
-      setStatus('error');
+      setStatus('invalid');
       setMessage('No verification token provided.');
     }
   }, [token]);
@@ -64,9 +74,9 @@ const VerifyEmail = () => {
             <div className="flex flex-col items-center gap-4 py-4">
               <CheckCircle className="w-14 h-14 text-green-500" />
               <h2 className="text-2xl font-bold text-gray-800">Email Verified!</h2>
-              <p className="text-gray-500 text-center">{message}</p>
+              <p className="text-gray-600 text-center">{message}</p>
               <p className="text-gray-500 text-center text-sm">
-                Your account is now active. You can sign in and start ordering.
+                Your account is now active. You can sign in and start ordering delicious pizzas!
               </p>
               <Link to="/login" className="w-full mt-2">
                 <Button className="w-full h-12 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg border-0">
@@ -76,23 +86,48 @@ const VerifyEmail = () => {
             </div>
           )}
 
-          {status === 'error' && (
+          {status === 'expired' && (
             <div className="flex flex-col items-center gap-4 py-4">
-              <XCircle className="w-14 h-14 text-red-500" />
-              <h2 className="text-2xl font-bold text-gray-800">Verification Failed</h2>
-              <p className="text-gray-500 text-center">{message}</p>
+              <XCircle className="w-14 h-14 text-amber-500" />
+              <h2 className="text-2xl font-bold text-gray-800">Link Expired</h2>
+              <p className="text-gray-600 text-center">{message}</p>
               <p className="text-gray-500 text-center text-sm">
-                The link may have expired (links are valid for 24 hours). Try registering again.
+                Verification links expire after 24 hours. You can easily request a new link from the login page.
               </p>
-              <div className="flex flex-col gap-2 w-full mt-2">
-                <Link to="/register" className="w-full">
+              <div className="flex flex-col gap-3 w-full mt-2">
+                <Link to="/login" className="w-full">
                   <Button className="w-full h-12 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg border-0">
-                    Register again
+                    Go to Login & Resend Link
                   </Button>
                 </Link>
+                <Link to="/register" className="w-full">
+                  <Button variant="outline" className="w-full h-12 rounded-xl border-2 border-gray-200 text-gray-700 hover:bg-gray-50">
+                    Register a New Account
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {(status === 'invalid' || status === 'error') && (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <XCircle className="w-14 h-14 text-red-500" />
+              <h2 className="text-2xl font-bold text-gray-800">
+                {status === 'invalid' ? 'Invalid or Used Link' : 'Verification Failed'}
+              </h2>
+              <p className="text-gray-600 text-center">{message}</p>
+              <p className="text-gray-500 text-center text-sm">
+                This link may have already been used, or the token is incorrect. If you already verified, try signing in.
+              </p>
+              <div className="flex flex-col gap-3 w-full mt-2">
                 <Link to="/login" className="w-full">
+                  <Button className="w-full h-12 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-semibold rounded-xl shadow-lg border-0">
+                    Go to Login
+                  </Button>
+                </Link>
+                <Link to="/register" className="w-full">
                   <Button variant="outline" className="w-full h-12 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50">
-                    Back to Login
+                    Register again
                   </Button>
                 </Link>
               </div>

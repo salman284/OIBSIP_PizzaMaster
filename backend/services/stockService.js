@@ -3,16 +3,7 @@ const Sauce = require('../models/Sauce');
 const Cheese = require('../models/Cheese');
 const Topping = require('../models/Topping');
 const User = require('../models/User');
-const nodemailer = require('nodemailer');
-
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+const { sendEmail } = require('../utils/sendEmail');
 
 const checkLowStock = async () => {
   try {
@@ -88,18 +79,16 @@ const checkLowStock = async () => {
       </div>
     `;
 
-    // Send email to all admin users
+    // Send email to all admin users via HTTPS sendEmail
     const emailPromises = adminUsers.map(admin => {
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: admin.email,
-        subject: `🚨 Automated Low Stock Alert - ${lowStockItems.length} Items Need Restocking`,
-        html: emailContent
-      };
-      return transporter.sendMail(mailOptions);
+      return sendEmail(
+        admin.email,
+        `🚨 Automated Low Stock Alert - ${lowStockItems.length} Items Need Restocking`,
+        emailContent
+      );
     });
 
-    await Promise.all(emailPromises);
+    await Promise.allSettled(emailPromises);
     console.log(`📧 Low stock alert sent to ${adminUsers.length} admin(s)`);
 
   } catch (error) {

@@ -57,6 +57,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     select: false
   },
+  lastVerificationEmailSent: {
+    type: Date,
+    select: false
+  },
   passwordResetToken: {
     type: String,
     select: false
@@ -150,7 +154,8 @@ userSchema.methods.generateEmailVerificationToken = function() {
     .update(token)
     .digest('hex');
   
-  this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+  this.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+  this.lastVerificationEmailSent = new Date();
   
   return token;
 };

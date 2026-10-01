@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
@@ -12,12 +12,34 @@ const Login = () => {
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isUnverified, setIsUnverified] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState('');
   
-  const { login, isLoading, error, clearError } = useAuth();
+  const { login, resendVerification, isLoading, error, errorCode, clearError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/';
+
+  // Cooldown countdown timer
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => Math.max(0, prev - 1));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  // Keep unverified state synced with context error code
+  useEffect(() => {
+    if (errorCode === 'EMAIL_NOT_VERIFIED') {
+      setIsUnverified(true);
+    }
+  }, [errorCode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,16 +52,45 @@ const Login = () => {
     if (error) {
       clearError();
     }
+    if (isUnverified) {
+      setIsUnverified(false);
+      setResendMessage('');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsUnverified(false);
+    setResendMessage('');
     
     try {
       await login(formData);
       navigate(from, { replace: true });
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch (err) {
+      console.error('Login failed:', err);
+      if (err.code === 'EMAIL_NOT_VERIFIED') {
+        setIsUnverified(true);
+      }
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!formData.email) {
+      return;
+    }
+    if (resendCooldown > 0 || resendLoading) return;
+
+    setResendLoading(true);
+    setResendMessage('');
+
+    try {
+      await resendVerification(formData.email);
+    } catch (err) {
+      console.error('Resend verification request failed:', err.message);
+    } finally {
+      setResendLoading(false);
+      setResendCooldown(60);
+      setResendMessage('If an account exists and is unverified, a new link has been sent. Please check your inbox and spam folder.');
     }
   };
 
@@ -76,7 +127,43 @@ const Login = () => {
 
         <Card className="p-8 shadow-2xl border-0 backdrop-blur-sm bg-white/80 rounded-2xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
+            {isUnverified && (
+              <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 text-sm space-y-3">
+                <div className="flex items-start text-amber-800">
+                  <svg className="w-5 h-5 text-amber-600 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="font-semibold text-amber-900">Email Verification Required</p>
+                    <p className="mt-1 text-amber-700">Please verify your email before logging in. Did not receive the link?</p>
+                  </div>
+                </div>
+
+                {resendMessage && (
+                  <div className="p-3 bg-green-50 border border-green-200 text-green-800 rounded-lg text-xs">
+                    {resendMessage}
+                  </div>
+                )}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResendVerification}
+                  disabled={resendCooldown > 0 || resendLoading || !formData.email}
+                  className="w-full h-10 border-amber-300 text-amber-900 hover:bg-amber-100 rounded-lg font-medium text-xs sm:text-sm"
+                >
+                  {resendLoading ? (
+                    'Sending verification email...'
+                  ) : resendCooldown > 0 ? (
+                    `Resend email available in ${resendCooldown}s`
+                  ) : (
+                    'Resend verification email'
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {error && !isUnverified && (
               <Alert variant="destructive" className="border-red-200 bg-red-50 rounded-xl">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">

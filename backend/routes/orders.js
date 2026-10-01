@@ -5,19 +5,10 @@ const PizzaBase = require('../models/PizzaBase');
 const Sauce = require('../models/Sauce');
 const Cheese = require('../models/Cheese');
 const Topping = require('../models/Topping');
-const nodemailer = require('nodemailer');
 const { protect, authorize } = require('../middleware/auth');
+const { sendEmail } = require('../utils/sendEmail');
 
 const router = express.Router();
-
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -142,33 +133,29 @@ const createOrder = async (req, res) => {
     // Send order confirmation email
     const user = await User.findById(req.user.id);
     try {
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: customer_email || user.email,
-        subject: `Order Confirmation - PizzaMaster (Order #${order._id})`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #dc2626;">Order Confirmation</h2>
-            <p>Hi ${customer_name || user.firstName},</p>
-            <p>Thank you for your order! Your pizza is being prepared.</p>
-            
-            <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <h3>Order Details</h3>
-              <p><strong>Order ID:</strong> ${order._id}</p>
-              <p><strong>Total Amount:</strong> $${total_price.toFixed(2)}</p>
-              <p><strong>Status:</strong> ${order.status}</p>
-              <p><strong>Delivery Address:</strong> ${delivery_address}</p>
-            </div>
-
-            <p>You can track your order status in your dashboard.</p>
-            <p>Best regards,<br>PizzaMaster Team</p>
+      const recipient = customer_email || user.email;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #dc2626;">Order Confirmation</h2>
+          <p>Hi ${customer_name || user.firstName},</p>
+          <p>Thank you for your order! Your pizza is being prepared.</p>
+          
+          <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <h3>Order Details</h3>
+            <p><strong>Order ID:</strong> ${order._id}</p>
+            <p><strong>Total Amount:</strong> $${total_price.toFixed(2)}</p>
+            <p><strong>Status:</strong> ${order.status}</p>
+            <p><strong>Delivery Address:</strong> ${delivery_address}</p>
           </div>
-        `
-      };
 
-      await transporter.sendMail(mailOptions);
+          <p>You can track your order status in your dashboard.</p>
+          <p>Best regards,<br>PizzaMaster Team</p>
+        </div>
+      `;
+
+      await sendEmail(recipient, `Order Confirmation - PizzaMaster (Order #${order._id})`, html);
     } catch (emailError) {
-      console.error('Email error:', emailError);
+      console.error('Order confirmation email failed:', emailError.message);
       // Continue even if email fails
     }
 
@@ -335,34 +322,27 @@ const updateOrderStatus = async (req, res) => {
         'cancelled': 'Your order has been cancelled.'
       };
 
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: order.user.email,
-        subject: `Order Update - PizzaMaster (Order #${order.orderNumber})`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #dc2626;">Order Status Update</h2>
-            <p>Hi ${order.user.firstName},</p>
-            <p>${statusMessages[status]}</p>
-            
-            <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
-              <h3>Order Details</h3>
-              <p><strong>Order Number:</strong> ${order.orderNumber}</p>
-              <p><strong>Status:</strong> ${order.status.replace('_', ' ').toUpperCase()}</p>
-              ${order.estimated_delivery ? `<p><strong>Estimated Delivery:</strong> ${order.estimated_delivery.toLocaleString()}</p>` : ''}
-            </div>
-
-            <p>Thank you for choosing PizzaMaster!</p>
-            <p>Best regards,<br>PizzaMaster Team</p>
+      const statusHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #dc2626;">Order Status Update</h2>
+          <p>Hi ${order.user.firstName},</p>
+          <p>${statusMessages[status]}</p>
+          
+          <div style="background-color: #f9fafb; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <h3>Order Details</h3>
+            <p><strong>Order Number:</strong> ${order.orderNumber}</p>
+            <p><strong>Status:</strong> ${order.status.replace('_', ' ').toUpperCase()}</p>
+            ${order.estimated_delivery ? `<p><strong>Estimated Delivery:</strong> ${order.estimated_delivery.toLocaleString()}</p>` : ''}
           </div>
-        `
-      };
 
-      if (transporter) {
-        await transporter.sendMail(mailOptions);
-      }
+          <p>Thank you for choosing PizzaMaster!</p>
+          <p>Best regards,<br>PizzaMaster Team</p>
+        </div>
+      `;
+
+      await sendEmail(order.user.email, `Order Update - PizzaMaster (Order #${order.orderNumber})`, statusHtml);
     } catch (emailError) {
-      console.log('Email sending failed:', emailError.message);
+      console.log('Order status update email failed:', emailError.message);
       // Continue without failing the status update
     }
 

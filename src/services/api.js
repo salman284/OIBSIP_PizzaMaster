@@ -50,13 +50,18 @@ const apiRequest = async (endpoint, options = {}) => {
     console.log('🌐 API Response Data:', data);
 
     if (!response.ok) {
-      throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+      const error = new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+      error.code = data.code;
+      error.status = response.status;
+      error.data = data;
+      throw error;
     }
 
     return data;
   } catch (error) {
     console.error('🚨 API Request Error Details:', {
       message: error.message,
+      code: error.code,
       stack: error.stack,
       url: url,
       config: config
@@ -114,6 +119,11 @@ export const authAPI = {
   }),
 
   verifyEmail: (token) => apiRequest(`/auth/verify-email/${token}`),
+
+  resendVerification: (email) => apiRequest('/auth/resend-verification', {
+    method: 'POST',
+    body: { email },
+  }),
 };
 
 // Pizza Ingredients API

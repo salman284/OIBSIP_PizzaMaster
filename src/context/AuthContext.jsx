@@ -67,7 +67,8 @@ const authReducer = (state, action) => {
         token: null,
         isAuthenticated: false,
         isLoading: false,
-        error: action.payload,
+        error: action.payload ? (typeof action.payload === 'object' ? action.payload.message : action.payload) : null,
+        errorCode: action.payload && typeof action.payload === 'object' ? action.payload.code : null,
       };
 
     case AUTH_ACTIONS.LOGOUT:
@@ -78,6 +79,7 @@ const authReducer = (state, action) => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        errorCode: null,
       };
 
     case AUTH_ACTIONS.UPDATE_USER:
@@ -90,6 +92,7 @@ const authReducer = (state, action) => {
       return {
         ...state,
         error: null,
+        errorCode: null,
       };
 
     default:
@@ -129,7 +132,7 @@ export const AuthProvider = ({ children }) => {
         storageAPI.removeUser();
         dispatch({
           type: AUTH_ACTIONS.LOAD_USER_FAILURE,
-          payload: error.message,
+          payload: { message: error.message, code: error.code },
         });
       }
     } else {
@@ -164,7 +167,7 @@ export const AuthProvider = ({ children }) => {
       console.error('🚨 Login error:', error);
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: error.message,
+        payload: { message: error.message, code: error.code },
       });
       throw error;
     }
@@ -238,6 +241,11 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   };
 
+  // Resend verification email
+  const resendVerification = async (email) => {
+    return await authAPI.resendVerification(email);
+  };
+
   // Check if user is admin
   const isAdmin = () => {
     return state.user?.role === 'admin';
@@ -250,6 +258,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     register,
+    resendVerification,
     logout,
     updateUser,
     changePassword,

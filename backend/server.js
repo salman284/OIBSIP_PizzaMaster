@@ -13,6 +13,11 @@ const cookieParser = require('cookie-parser');
 const cron = require('node-cron');
 require('dotenv').config();
 
+// Ensure email configuration is loaded
+if (process.env.EMAIL_API_KEY) {
+  console.log('📧 Email provider initialized: ' + (process.env.EMAIL_PROVIDER || 'brevo'));
+}
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');

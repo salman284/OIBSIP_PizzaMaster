@@ -1,22 +1,13 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
 const PizzaBase = require('../models/PizzaBase');
 const Sauce = require('../models/Sauce');
 const Cheese = require('../models/Cheese');
 const Topping = require('../models/Topping');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
+const { sendEmail } = require('../utils/sendEmail');
 
 const router = express.Router();
-
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 // @desc    Get inventory dashboard
 // @route   GET /api/inventory/dashboard
@@ -258,18 +249,16 @@ const sendLowStockAlert = async (req, res) => {
       </div>
     `;
 
-    // Send email to all admin users
+    // Send email to all admin users via HTTPS sendEmail
     const emailPromises = adminUsers.map(admin => {
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: admin.email,
-        subject: `🚨 Low Stock Alert - ${lowStockItems.length} Items Need Restocking`,
-        html: emailContent
-      };
-      return transporter.sendMail(mailOptions);
+      return sendEmail(
+        admin.email,
+        `🚨 Low Stock Alert - ${lowStockItems.length} Items Need Restocking`,
+        emailContent
+      );
     });
 
-    await Promise.all(emailPromises);
+    await Promise.allSettled(emailPromises);
 
     res.status(200).json({
       success: true,
