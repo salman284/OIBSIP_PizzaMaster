@@ -159,7 +159,7 @@ export default function Orders() {
                         <Badge className={`${statusInfo[order.status]?.color} border mb-2`}>
                           {order.status.replace('_', ' ').toUpperCase()}
                         </Badge>
-                        <p className="text-2xl font-bold text-red-600">${order.total_price?.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-red-600">₹{order.total_price?.toFixed(2)}</p>
                       </div>
                     </div>
                   </CardHeader>

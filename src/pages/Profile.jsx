@@ -284,7 +284,7 @@ const Profile = () => {
               
               <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-xl p-6 text-white">
                 <h4 className="text-lg font-semibold mb-2">Total Spent</h4>
-                <p className="text-3xl font-bold">${statistics.totalSpent.toFixed(2)}</p>
+                <p className="text-3xl font-bold">₹{statistics.totalSpent.toFixed(2)}</p>
               </div>
             </div>
           </motion.div>
@@ -412,7 +412,7 @@ const Profile = () => {
                   
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold text-orange-600">
-                      ${order.total_price?.toFixed(2) || '0.00'}
+                      ₹{order.total_price?.toFixed(2) || '0.00'}
                     </span>
                   </div>
                 </div>

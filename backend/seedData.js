@@ -21,35 +21,35 @@ const seedData = async () => {
       {
         name: 'Thin Crust',
         description: 'Crispy and light thin crust',
-        price: 8.99,
+        price: 99,
         stockQuantity: 50,
         isActive: true
       },
       {
         name: 'Thick Crust',
         description: 'Hearty and filling thick crust',
-        price: 10.99,
+        price: 129,
         stockQuantity: 40,
         isActive: true
       },
       {
         name: 'Stuffed Crust',
         description: 'Cheese-filled crust for extra indulgence',
-        price: 12.99,
+        price: 159,
         stockQuantity: 30,
         isActive: true
       },
       {
         name: 'Gluten-Free',
         description: 'Perfect for gluten-sensitive customers',
-        price: 13.99,
+        price: 169,
         stockQuantity: 20,
         isActive: true
       },
       {
         name: 'Cauliflower Crust',
         description: 'Healthy cauliflower-based crust',
-        price: 14.99,
+        price: 189,
         stockQuantity: 25,
         isActive: true
       }
@@ -60,35 +60,35 @@ const seedData = async () => {
       {
         name: 'Classic Tomato',
         description: 'Traditional tomato base sauce',
-        price: 0.99,
+        price: 29,
         stockQuantity: 100,
         isActive: true
       },
       {
         name: 'BBQ Sauce',
         description: 'Sweet and tangy barbecue sauce',
-        price: 1.49,
+        price: 39,
         stockQuantity: 80,
         isActive: true
       },
       {
         name: 'White Sauce',
         description: 'Creamy garlic white sauce',
-        price: 1.29,
+        price: 35,
         stockQuantity: 70,
         isActive: true
       },
       {
         name: 'Pesto',
         description: 'Fresh basil pesto sauce',
-        price: 1.99,
+        price: 49,
         stockQuantity: 60,
         isActive: true
       },
       {
         name: 'Buffalo Sauce',
         description: 'Spicy buffalo wing sauce',
-        price: 1.79,
+        price: 45,
         stockQuantity: 50,
         isActive: true
       }
@@ -99,28 +99,28 @@ const seedData = async () => {
       {
         name: 'Mozzarella',
         description: 'Classic stretchy mozzarella cheese',
-        price: 2.49,
+        price: 49,
         stockQuantity: 200,
         isActive: true
       },
       {
         name: 'Cheddar',
         description: 'Sharp and flavorful cheddar',
-        price: 2.99,
+        price: 59,
         stockQuantity: 150,
         isActive: true
       },
       {
         name: 'Parmesan',
         description: 'Rich and nutty parmesan',
-        price: 3.49,
+        price: 69,
         stockQuantity: 100,
         isActive: true
       },
       {
         name: 'Feta',
         description: 'Tangy Mediterranean feta cheese',
-        price: 3.99,
+        price: 79,
         stockQuantity: 80,
         isActive: true
       }
@@ -133,7 +133,7 @@ const seedData = async () => {
         name: 'Pepperoni',
         description: 'Classic spicy pepperoni slices',
         category: 'meat',
-        price: 2.99,
+        price: 69,
         stockQuantity: 150,
         isActive: true
       },
@@ -141,7 +141,7 @@ const seedData = async () => {
         name: 'Italian Sausage',
         description: 'Seasoned Italian sausage',
         category: 'meat',
-        price: 3.49,
+        price: 79,
         stockQuantity: 120,
         isActive: true
       },
@@ -149,7 +149,7 @@ const seedData = async () => {
         name: 'Bacon',
         description: 'Crispy bacon bits',
         category: 'meat',
-        price: 3.99,
+        price: 89,
         stockQuantity: 100,
         isActive: true
       },
@@ -157,7 +157,7 @@ const seedData = async () => {
         name: 'Ham',
         description: 'Lean diced ham',
         category: 'meat',
-        price: 3.29,
+        price: 75,
         stockQuantity: 110,
         isActive: true
       },
@@ -166,7 +166,7 @@ const seedData = async () => {
         name: 'Mushrooms',
         description: 'Fresh button mushrooms',
         category: 'vegetable',
-        price: 1.99,
+        price: 39,
         stockQuantity: 200,
         isActive: true
       },
@@ -174,7 +174,7 @@ const seedData = async () => {
         name: 'Bell Peppers',
         description: 'Colorful bell pepper mix',
         category: 'vegetable',
-        price: 1.79,
+        price: 35,
         stockQuantity: 180,
         isActive: true
       },
@@ -182,7 +182,7 @@ const seedData = async () => {
         name: 'Red Onions',
         description: 'Sweet red onion slices',
         category: 'vegetable',
-        price: 1.49,
+        price: 29,
         stockQuantity: 160,
         isActive: true
       },
@@ -190,7 +190,7 @@ const seedData = async () => {
         name: 'Black Olives',
         description: 'Mediterranean black olives',
         category: 'vegetable',
-        price: 2.29,
+        price: 45,
         stockQuantity: 140,
         isActive: true
       },
@@ -198,7 +198,7 @@ const seedData = async () => {
         name: 'Tomatoes',
         description: 'Fresh cherry tomato halves',
         category: 'vegetable',
-        price: 1.89,
+        price: 35,
         stockQuantity: 170,
         isActive: true
       },
@@ -206,7 +206,7 @@ const seedData = async () => {
         name: 'Spinach',
         description: 'Fresh baby spinach leaves',
         category: 'vegetable',
-        price: 2.19,
+        price: 39,
         stockQuantity: 130,
         isActive: true
       },
@@ -215,7 +215,7 @@ const seedData = async () => {
         name: 'Prosciutto',
         description: 'Premium Italian prosciutto',
         category: 'premium',
-        price: 5.99,
+        price: 119,
         stockQuantity: 50,
         isActive: true
       },
@@ -223,7 +223,7 @@ const seedData = async () => {
         name: 'Truffle Oil',
         description: 'Aromatic truffle oil drizzle',
         category: 'premium',
-        price: 4.99,
+        price: 99,
         stockQuantity: 30,
         isActive: true
       },
@@ -231,7 +231,7 @@ const seedData = async () => {
         name: 'Goat Cheese',
         description: 'Creamy goat cheese crumbles',
         category: 'premium',
-        price: 4.49,
+        price: 89,
         stockQuantity: 40,
         isActive: true
       }

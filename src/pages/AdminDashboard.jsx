@@ -181,7 +181,7 @@ export default function AdminDashboard() {
             <CardHeader className="flex flex-row items-center justify-between p-6">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-3xl font-bold text-gray-900">${data.stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-gray-900">₹{data.stats.totalRevenue.toFixed(2)}</p>
               </div>
               <TrendingUp className="w-8 h-8 text-purple-500" />
             </CardHeader>
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
                             {order.customer_name || 'Unknown Customer'}
                           </p>
                           <p className="text-sm text-gray-600">
-                            {order.pizza_base?.name || order.pizza_base || 'Unknown Base'} • ${order.total_price?.toFixed(2) || '0.00'}
+                            {order.pizza_base?.name || order.pizza_base || 'Unknown Base'} • ₹{order.total_price?.toFixed(2) || '0.00'}
                           </p>
                           <p className="text-xs text-gray-500">
                             {(order.created_date || order.createdAt) ? 

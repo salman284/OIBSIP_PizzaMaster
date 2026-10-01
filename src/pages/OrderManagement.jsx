@@ -242,7 +242,7 @@ export default function OrderManagement() {
                         <Badge className={`${statusColors[order.status] || statusColors.pending} border mb-2`}>
                           {(order.status || 'pending').replace('_', ' ').toUpperCase()}
                         </Badge>
-                        <p className="text-2xl font-bold text-red-600">${(order.total_price || 0).toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-red-600">₹{(order.total_price || 0).toFixed(2)}</p>
                       </div>
                     </div>
                   </CardHeader>

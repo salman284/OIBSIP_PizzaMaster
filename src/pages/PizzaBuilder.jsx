@@ -279,7 +279,7 @@ export default function PizzaBuilder() {
                         <div className="flex justify-between items-center">
                           <span className={`font-bold text-lg ${
                             selection.base?.id === base.id ? 'text-red-600' : 'text-red-500'
-                          }`}>${base.price.toFixed(2)}</span>
+                          }`}>₹{base.price.toFixed(2)}</span>
                           <Badge variant="outline" className={`${
                             base.stock < 10 
                               ? 'border-red-500 text-red-700 bg-red-50' 
@@ -361,7 +361,7 @@ export default function PizzaBuilder() {
                         <div className="flex justify-between items-center">
                           <span className={`font-bold text-lg ${
                             selection.sauce?._id === sauce._id ? 'text-red-600' : 'text-red-500'
-                          }`}>${sauce.price.toFixed(2)}</span>
+                          }`}>₹{sauce.price.toFixed(2)}</span>
                           <Badge variant="outline" className={`${
                             sauce.stock < 10 
                               ? 'border-red-500 text-red-700 bg-red-50' 
@@ -443,7 +443,7 @@ export default function PizzaBuilder() {
                         <div className="flex justify-between items-center">
                           <span className={`font-bold text-lg ${
                             selection.cheese?._id === cheese._id ? 'text-red-600' : 'text-red-500'
-                          }`}>${cheese.price.toFixed(2)}</span>
+                          }`}>₹{cheese.price.toFixed(2)}</span>
                           <Badge variant="outline" className={`${
                             cheese.stock < 10 
                               ? 'border-red-500 text-red-700 bg-red-50' 
@@ -528,7 +528,7 @@ export default function PizzaBuilder() {
                         <div className="flex justify-between items-center text-xs">
                           <span className={`font-bold ${
                             selection.toppings.find(t => t._id === topping._id) ? 'text-red-600' : 'text-red-500'
-                          }`}>${topping.price.toFixed(2)}</span>
+                          }`}>₹{topping.price.toFixed(2)}</span>
                         </div>
                         <Badge variant="outline" className={`text-xs mt-1 w-full justify-center ${
                           topping.stock < 10 
@@ -553,7 +553,7 @@ export default function PizzaBuilder() {
                         animate={{ scale: 1 }}
                         transition={{ duration: 0.3 }}
                       >
-                        Total: ${calculateTotal().toFixed(2)}
+                        Total: ₹{calculateTotal().toFixed(2)}
                       </motion.p>
                     </div>
                     <Button 
@@ -584,17 +584,17 @@ export default function PizzaBuilder() {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span>Base: {selection.base?.name}</span>
-                      <span className="font-medium">${selection.base?.price.toFixed(2)}</span>
+                      <span className="font-medium">₹{selection.base?.price.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between items-center">
                       <span>Sauce: {selection.sauce?.name}</span>
-                      <span className="font-medium">${selection.sauce?.price.toFixed(2)}</span>
+                      <span className="font-medium">₹{selection.sauce?.price.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between items-center">
                       <span>Cheese: {selection.cheese?.name}</span>
-                      <span className="font-medium">${selection.cheese?.price.toFixed(2)}</span>
+                      <span className="font-medium">₹{selection.cheese?.price.toFixed(2)}</span>
                     </div>
                     <Separator />
                     <div className="space-y-2">
@@ -602,14 +602,14 @@ export default function PizzaBuilder() {
                       {selection.toppings.map((topping) => (
                         <div key={topping._id} className="flex justify-between items-center text-sm">
                           <span>• {topping.name}</span>
-                          <span>${topping.price.toFixed(2)}</span>
+                          <span>₹{topping.price.toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
                     <Separator />
                     <div className="flex justify-between items-center text-xl font-bold text-red-600">
                       <span>Total:</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span>₹{calculateTotal().toFixed(2)}</span>
                     </div>
                   </CardContent>
                 </Card>

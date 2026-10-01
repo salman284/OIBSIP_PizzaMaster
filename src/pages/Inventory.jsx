@@ -161,7 +161,7 @@ export default function Inventory() {
                       )}
                       <div className="flex items-center gap-4 text-sm">
                         <span className="text-gray-600">
-                          <strong>Price:</strong> ${(item.price || 0).toFixed(2)}
+                          <strong>Price:</strong> ₹{(item.price || 0).toFixed(2)}
                         </span>
                         <span className="text-gray-600">
                           <strong>Min Threshold:</strong> {item.min_threshold || 0}

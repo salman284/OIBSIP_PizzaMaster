@@ -44,19 +44,19 @@ export default function Dashboard() {
       name: "Margherita Classic",
       description: "Fresh mozzarella, tomato sauce, basil",
       image: "https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=400&h=300&fit=crop",
-      price: 12.99
+      price: 249
     },
     {
       name: "Pepperoni Supreme",
       description: "Pepperoni, mozzarella, oregano",
       image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop&q=80",
-      price: 15.99
+      price: 349
     },
     {
       name: "Veggie Deluxe",
       description: "Bell peppers, mushrooms, olives, onions",
       image: "https://images.unsplash.com/photo-1571407970349-bc81e7e96d47?w=400&h=300&fit=crop",
-      price: 14.99
+      price: 299
     }
   ];
 
@@ -137,7 +137,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex justify-between items-center">
-                      <span className="text-2xl font-bold text-red-600">${pizza.price}</span>
+                      <span className="text-2xl font-bold text-red-600">₹{pizza.price}</span>
                       <Link to={createPageUrl("PizzaBuilder")}>
                         <Button className="bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600">
                           Customize
@@ -174,7 +174,7 @@ export default function Dashboard() {
                           {order.pizza_base?.name || order.pizza_base || 'Pizza'} with {order.sauce?.name || order.sauce || 'Tomato'} sauce
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(order.createdAt).toLocaleDateString()} • ${order.total_price?.toFixed(2)}
+                          {new Date(order.createdAt).toLocaleDateString()} • ₹{order.total_price?.toFixed(2)}
                         </p>
                       </div>
                       <Badge className={`${statusColors[order.status]} border`}>
